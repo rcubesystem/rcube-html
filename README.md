@@ -2,6 +2,8 @@
 
 Schema-driven forms and layouts for **React + React-Bootstrap**. Describe rows, columns, fields and buttons as JSON-like objects; rcube-html renders them with validation, conditional fields, dependent selects, input masks, repeatable entries, runtime element changes and multi-language text.
 
+**Live demo and tutorials: [rcube-html.web.app](https://rcube-html.web.app)** — every component with a live example, the events it fires, and copy-ready schema and page code ([source](https://github.com/rcubesystem/rcube-html-examples)).
+
 ```bash
 npm install rcube-html react-bootstrap bootstrap
 ```
@@ -15,6 +17,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 Works in Next.js App Router (the bundle is marked `"use client"`).
 
 ## Quick start
+
+Live demo: [rcube-html.web.app](https://rcube-html.web.app)
 
 ```jsx
 "use client";
@@ -53,6 +57,8 @@ export default function SignUp() {
 
 ## Schema nodes
 
+Live demo: [rcube-html.web.app/schema-basics](https://rcube-html.web.app/schema-basics)
+
 Every node has a unique `id`. Layout nodes have `children`; component nodes have `props`.
 
 | `type` | Renders | Notes |
@@ -82,6 +88,8 @@ Every node has a unique `id`. Layout nodes have `children`; component nodes have
 `options` can be strings (`["Yes", "No"]`) or `{ label, value }` objects.
 
 ## Containers
+
+Live demo: [rcube-html.web.app/cards-alerts](https://rcube-html.web.app/cards-alerts) · [tabs & accordion](https://rcube-html.web.app/tabs-accordion) · [modal & carousel](https://rcube-html.web.app/modal-carousel)
 
 Containers render other schema nodes — text, buttons, rows and **form fields** — which keep validation, values, events and translation. Nested nodes go in `children`, in `items[].children` (one list per tab / panel / slide), or in `footer` (Modal).
 
@@ -125,6 +133,8 @@ Containers render other schema nodes — text, buttons, rows and **form fields**
 Tabs and Accordion `onSelect` events receive `{ eventKey }`; Modal `onHide` and Alert `onClose` run when they close themselves.
 
 ## DataTable
+
+Live demo: [rcube-html.web.app/data-table](https://rcube-html.web.app/data-table) · [editable table & row actions](https://rcube-html.web.app/table-editing)
 
 A schema-driven table (also registered as `DynamicTable`) with pagination, sorting, search, selection, editable cells, header groups, row / column spans, totals, CSV export and responsive views.
 
@@ -249,6 +259,8 @@ Tables with a `name` add their rows to submitted entries: `[{ firstName: 'JANE',
 
 ## Chart
 
+Live demo: [rcube-html.web.app/charts](https://rcube-html.web.app/charts)
+
 An SVG chart (no chart library): bar, line, area, pie, donut and scatter, with tooltips, hover, highlight, rulers, animation, and data that changes at runtime from form events and buttons.
 
 ```js
@@ -308,6 +320,8 @@ actions: (api) => ({
 ```
 
 ## Calendar
+
+Live demo: [rcube-html.web.app/calendar](https://rcube-html.web.app/calendar)
 
 A calendar with day, week, month, year and schedule (agenda) views: a sidebar with a mini month and calendar toggles, search, drag to create / move / resize, an event editor, repeating events and keyboard shortcuts. Events are meant to come from your API: `onRangeChange` runs on the first render and whenever the visible range changes, and your action answers with `setCalendarEvents`.
 
@@ -382,6 +396,8 @@ actions: (api) => ({
 
 ## Tree
 
+Live demo: [rcube-html.web.app/tree](https://rcube-html.web.app/tree) · [file explorer with lazy loading](https://rcube-html.web.app/tree-explorer)
+
 A tree with three views — `tree` (classic, optional lines / checkboxes), `explorer` (folder pane + contents with details / list / icons, breadcrumb, sorting, paging) and `columns` (one column per level). Nodes come from the schema, from your API on demand (lazy children, paged with a cursor — fits S3's continuation tokens), or both. Long lists only render the rows on screen.
 
 ```js
@@ -451,6 +467,8 @@ actions: (api) => ({
 
 ## File upload
 
+Live demo: [rcube-html.web.app/file-upload](https://rcube-html.web.app/file-upload)
+
 `FileUploadField` (also `FileUpload`) is a form field: drag & drop, browse, paste or drop anywhere on the page, with validation, thumbnails, image preview, per-file and overall progress, cancel / retry / remove, parallel and manual uploads. It takes part in `required` validation and submitted entries like any other field.
 
 ```js
@@ -498,6 +516,8 @@ actions: (api) => ({
 
 ## Field props
 
+Live demo: [rcube-html.web.app/validation](https://rcube-html.web.app/validation)
+
 | Prop | Applies to | Effect |
 |---|---|---|
 | `name` | all fields | Field key in values / errors / submitted entries (defaults to the node `id`) |
@@ -518,6 +538,8 @@ Per-field messages override the library defaults.
 
 ## Conditional fields — `visibleWhen`
 
+Live demo: [rcube-html.web.app/conditional-fields](https://rcube-html.web.app/conditional-fields)
+
 Any node (row, column or field) can be shown only when another field has a value. Hidden fields are not rendered, so they are skipped by validation.
 
 ```js
@@ -528,6 +550,8 @@ Tests: `equals` (radio / select / text), `includesAny`, `includesAll` (checkbox 
 
 ## Dependent selects — `optionsFrom`
 
+Live demo: [rcube-html.web.app/select-fields](https://rcube-html.web.app/select-fields)
+
 ```js
 { type: 'SelectField', id: 'county', props: { name: 'county', label: 'County',
   optionsFrom: { field: 'state', map: { California: ['Alameda', 'Alpine', ...], ... },
@@ -537,6 +561,8 @@ Tests: `equals` (radio / select / text), `includesAny`, `includesAll` (checkbox 
 The list follows the `state` field; changing the state clears the county. A select with no options is not required.
 
 ## Events and actions
+
+Live demo: [rcube-html.web.app/events-actions](https://rcube-html.web.app/events-actions)
 
 Any `on…` prop in the schema names an action:
 
@@ -577,6 +603,8 @@ const form = useDynamicTag({
 
 ## Repeatable entries
 
+Live demo: [rcube-html.web.app/repeatable-entries](https://rcube-html.web.app/repeatable-entries)
+
 ```js
 const form = useDynamicTag({ schema, buttons, repeatable: true });
 // schema button: { type: 'ButtonField', id: 'add', props: { text: '@repeat.addAnother', onClick: 'addCopy()' } }
@@ -589,6 +617,8 @@ Each added entry gets an "Entry N" heading and a Remove button. Field names in c
 ```
 
 ## Languages
+
+Live demo: [rcube-html.web.app/languages](https://rcube-html.web.app/languages)
 
 Write `@key` instead of fixed text anywhere in a node's props, and provide message sets:
 
@@ -617,6 +647,8 @@ const form = useDynamicTag({
 Missing keys fall back to `messages`, then to the library English. The library ships `lang_en` and `lang_es`; copy `rcube-html/lang/lang_en` to add another language. Each `<DynamicTag>` uses its own form's language.
 
 ## Custom components
+
+Live demo: [rcube-html.web.app/custom-components](https://rcube-html.web.app/custom-components)
 
 ```js
 import { registerComponent } from 'rcube-html';
