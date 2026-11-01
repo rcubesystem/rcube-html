@@ -28,15 +28,19 @@ const TEXT_KEY_PREFIX = '@';
 export const translateText = (value, t = defaultTranslator) =>
   (typeof value === 'string' && value.startsWith(TEXT_KEY_PREFIX) ? t(value.slice(TEXT_KEY_PREFIX.length)) : value);
 
+// Data, not text: never translated (lookup tables, table rows, row selection / hidden-column lists)
+const DATA_KEYS = new Set(['map', 'rows', 'selected', 'hiddenColumns']);
+
 /**
  * Translate every "@key" string inside a schema node's props (labels, placeholders, messages,
- * option labels, optionsFrom texts, ...). Data lookup tables under a "map" key are left untouched.
- * Strings without the "@" prefix pass through unchanged.
+ * option labels, optionsFrom texts, column titles, ...). Data under DATA_KEYS is left untouched,
+ * so a table cell value like "@handle" stays as-is. Strings without the "@" prefix pass through unchanged.
  */
 export const translateProps = (value, t = defaultTranslator, key) => {
+  if (DATA_KEYS.has(key)) return value;
   if (typeof value === 'string') return translateText(value, t);
   if (Array.isArray(value)) return value.map((item) => translateProps(item, t));
-  if (value && typeof value === 'object' && key !== 'map' && Object.getPrototypeOf(value) === Object.prototype) {
+  if (value && typeof value === 'object' && Object.getPrototypeOf(value) === Object.prototype) {
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, translateProps(v, t, k)]));
   }
   return value;

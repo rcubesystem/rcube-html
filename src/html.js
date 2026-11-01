@@ -1,17 +1,14 @@
-import { InputField, TextareaField, SelectField, RadioGroupField, CheckboxGroupField, ButtonField, isNodeVisible, getFieldValue, setFieldDomValue, resolveEventProps, FIELD_TYPES } from './form';
+import { InputField, TextareaField, SelectField, RadioGroupField, CheckboxGroupField, SliderField, ButtonField, isNodeVisible, getFieldValue, setFieldDomValue, resolveEventProps, FIELD_TYPES } from './form';
 import { translateProps, useTranslator } from './i18n';
-import { Container, Row, Col, Card as BsCard, Image } from "react-bootstrap";
+import { BUILT_IN_CONTAINERS, BUILT_IN_DISPLAY } from './components';
+import { DataTable } from './table';
+import { Chart } from './chart';
+import { Calendar } from './calendar';
+import { FileUploadField } from './upload';
+import { Tree } from './tree';
+import { Container, Row, Col, Image } from "react-bootstrap";
 
-// 1. Define UI components to resolve inside the layout  
-const Card = ({ title, content, className = '' }) => (
-  <BsCard className={className}>
-    <BsCard.Body>
-      <BsCard.Title>{title}</BsCard.Title>
-      <BsCard.Text>{content}</BsCard.Text>
-    </BsCard.Body>
-  </BsCard>
-);
- 
+// 1. Define UI components to resolve inside the layout
 
 // Text Component: one component for every text tag (h1-h6, p, span, ...)
 // Schema: { "type": "Text", "props": { "tag": "h3", "text": "Title" } } or a registry alias like { "type": "H3" }
@@ -49,31 +46,49 @@ const LIST = ({ items = [], children, ...props }) => (
 
 // 2. Map string keys to literal React components
 const ComponentRegistry = {
-  Card,
   Text,
   ...textAliases, // H1, H2, H3, H4, H5, H6, P, SPAN, SMALL, STRONG, EM, LABEL, BLOCKQUOTE
   A, IMG, DIV, LIST,
+  ...BUILT_IN_DISPLAY,    // Badge, Breadcrumb, ProgressBar, Spinner, ListGroup
+  ...BUILT_IN_CONTAINERS, // Card, Accordion, Tabs, Modal, Dialog, Carousel, Tooltip, Popover, Alert
+  DataTable,
+  DynamicTable: DataTable,
+  Chart,
+  Calendar,
+  Tree,
   InputField,
   TextareaField,
   SelectField,
   RadioGroupField,
   CheckboxGroupField,
+  SliderField,
+  FileUploadField,
+  FileUpload: FileUploadField,
   ButtonField
 };
 
 // Components built with forwardRef whose DOM node gets stored in fieldRefs (shared with form.js)
 const RefFields = FIELD_TYPES;
 
+// Components that render nested schema nodes (node.children / node.items[].children / node.footer)
+// (DataTable, Chart, Calendar and Tree get the same props so they can reach the form's actions, errors and change tracking)
+const ContainerTypes = new Set([...Object.keys(BUILT_IN_CONTAINERS), 'DataTable', 'DynamicTable', 'Chart', 'Calendar', 'Tree']);
+
 /**
  * Add a project-specific component to the registry so schemas can use it by name:
  *   registerComponent('Rating', RatingComponent);                       // display component
  *   registerComponent('RatingField', RatingField, { field: true });     // form field
+ *   registerComponent('Panel', Panel, { container: true });             // renders nested nodes
  * Field components must forwardRef to their input element (or a <fieldset> for groups) so the
  * form can read, set and validate their value; they receive name, error and onChange props.
+ * Container components receive node, nodeId, items, renderNodes, actions and formContext
+ * ({ errors, onFieldChange, values }) (see components.js);
+ * render nested nodes with renderNodes(node.children) or renderNodes(item.children).
  */
-export const registerComponent = (name, component, { field = false } = {}) => {
+export const registerComponent = (name, component, { field = false, container = false } = {}) => {
   ComponentRegistry[name] = component;
   if (field) FIELD_TYPES.add(name);
+  if (container) ContainerTypes.add(name);
 };
 
 // Merge a node's runtime state into a copy of it: override props (style merged), and add Bootstrap's
@@ -189,6 +204,27 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
 
   // Non-field components: schema events (e.g. "onClick": "resetForm()") resolve the same way
   const events = resolveEventProps(node.props, functionMap, () => ({ name: node.id, values, fieldRefs }));
+
+  // Containers render nested schema nodes with the same form context (fields inside keep validation,
+  // values, events and translation)
+  if (ContainerTypes.has(componentName)) {
+    const renderNodes = (nodes = []) => nodes.map((child) => (
+      <LayoutParser key={child.id} node={child} {...childProps} />
+    ));
+    return (
+      <ComponentToRender
+        {...node.props}
+        {...events}
+        node={node}
+        nodeId={node.id}
+        items={node.items ? translateProps(node.items, t) : undefined}
+        renderNodes={renderNodes}
+        actions={functionMap}
+        formContext={{ errors, onFieldChange, values }}
+      />
+    );
+  }
+
   return <ComponentToRender {...node.props} {...events} />;
 };
 

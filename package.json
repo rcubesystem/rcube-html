@@ -1,6 +1,6 @@
 {
   "name": "rcube-html",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Schema-driven React + Bootstrap forms and layouts: validation, conditional fields, dependent selects, repeatable entries, runtime element changes and i18n.",
   "keywords": [
     "react",
@@ -43,6 +43,7 @@
   "sideEffects": false,
   "scripts": {
     "build": "tsup",
+    "dev": "tsup --watch",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
@@ -53,6 +54,7 @@
   },
   "devDependencies": {
     "bootstrap": "5.3.3",
+    "jsdom": "^25.0.1",
     "react": "18.3.1",
     "react-bootstrap": "2.10.10",
     "react-dom": "18.3.1",

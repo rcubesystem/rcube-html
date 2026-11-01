@@ -43,8 +43,9 @@ const buildCopyHeading = (copyId, index, t) => ({
  *   repeatable  true to allow "+ Add Another" (addCopy) and per-copy "Remove" (removeCopy).
  *
  * Built-in actions (usable from the schema by name)
- *   runValidation, clearForm, resetForm, addCopy, removeCopy, switchLanguage
- *   ("switchLanguage()" reads the button's "data-lang" attribute, e.g. "data-lang": "es")
+ *   runValidation, clearForm, resetForm, addCopy, removeCopy, switchLanguage, openModal, closeModal, selectTab
+ *   ("switchLanguage()" reads the button's "data-lang" attribute, e.g. "data-lang": "es";
+ *    "openModal()" / "closeModal()" read "data-modal"; "selectTab()" reads "data-tabs" and "data-key")
  *
  * Returns
  *   actions      every action / method (setFieldValue, setFormData, getFormEntries, setNodeProps, ...)
@@ -74,6 +75,9 @@ export const useDynamicTag = ({
   const [values, setValues] = useState({});
   // { [nodeId]: { hidden, removed, props } } — runtime element changes
   const [nodeState, setNodeState] = useState({});
+  // Latest element state for actions that read it (getRows, getSelectedRows, getFormEntries)
+  const nodeStateRef = useRef(nodeState);
+  nodeStateRef.current = nodeState;
   // Copy ids of the repeated form; ids are never reused so removing one doesn't rename the rest
   const [copyIds, setCopyIds] = useState([1]);
   const nextCopyId = useRef(2);
@@ -96,7 +100,7 @@ export const useDynamicTag = ({
 
   const actions = createFormActions({
     fieldRefs, pendingValues, setFormErrors: setErrors, setFormValues: setValues, setNodeState,
-    schema: fullSchema, data, onSubmit, t,
+    schema: fullSchema, data, onSubmit, t, getNodeState: () => nodeStateRef.current,
   });
 
   // ---- Repeatable entries ----
@@ -116,6 +120,26 @@ export const useDynamicTag = ({
     setErrors(withoutCopy);
     setValues(withoutCopy);
     pendingValues.current = withoutCopy(pendingValues.current);
+  };
+
+  // ---- Containers ----
+  // Read a target node id from a button's data-* attribute, or take it directly from code
+  const targetId = (eventOrId, attribute) => (typeof eventOrId === 'string' ? eventOrId : eventOrId?.currentTarget?.dataset?.[attribute]);
+  // Button { "data-modal": "m1", "onClick": "openModal()" } or actions.openModal("m1")
+  actions.openModal = (eventOrId) => {
+    const id = targetId(eventOrId, 'modal');
+    if (id) actions.setNodeProps(id, { show: true });
+  };
+  actions.closeModal = (eventOrId) => {
+    const id = targetId(eventOrId, 'modal');
+    if (id) actions.setNodeProps(id, { show: false });
+  };
+  // Button { "data-tabs": "t1", "data-key": "address", "onClick": "selectTab()" } or actions.selectTab("t1", "address").
+  // Works for Accordion too. activeKeyRequest makes repeated requests for the same key take effect.
+  actions.selectTab = (eventOrId, key) => {
+    const id = targetId(eventOrId, 'tabs');
+    const activeKey = key ?? eventOrId?.currentTarget?.dataset?.key;
+    if (id && activeKey != null) actions.setNodeProps(id, { activeKey, activeKeyRequest: Date.now() });
   };
 
   // ---- Language ----
