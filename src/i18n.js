@@ -16,10 +16,10 @@ export const createTranslator = (messages, fallback) => (key, values = {}) => {
   return template.replace(/\{(\w+)\}/g, (match, name) => (name in values ? String(values[name]) : match));
 };
 
-// Library English only; used outside a form (or a <DynamicForm>) and as the default everywhere
+// Library English only; used outside a form (or a <DynamicTag>) and as the default everywhere
 export const defaultTranslator = createTranslator(libEn);
 
-// Each <DynamicForm> provides its form's translator, so two forms can use different languages
+// Each <DynamicTag> provides its form's translator, so two forms can use different languages
 export const I18nContext = createContext(defaultTranslator);
 export const useTranslator = () => useContext(I18nContext);
 

@@ -42,7 +42,7 @@ const messages = {
     dateMaxYearsAgo: "Date cannot be more than {years} years ago.",
   },
 
-  // Repeatable forms (useDynamicForm({ repeatable: true }))
+  // Repeatable forms (useDynamicTag({ repeatable: true }))
   repeat: {
     // Heading over each entry; {n} = entry number
     entry: "Entry {n}",

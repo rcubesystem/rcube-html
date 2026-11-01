@@ -1,6 +1,6 @@
 // rcube-html public API
-export { useDynamicForm } from "./useDynamicForm";
-export { DynamicForm } from "./DynamicForm";
+export { useDynamicTag } from "./useDynamicTag";
+export { DynamicTag } from "./DynamicTag";
 export { LayoutParser, ComponentRegistry, registerComponent } from "./html";
 export {
   InputField, TextareaField, SelectField, RadioGroupField, CheckboxGroupField, ButtonField,

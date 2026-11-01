@@ -17,9 +17,9 @@ const buildCopyHeading = (copyId, index, t) => ({
 });
 
 /**
- * All the state a schema-driven form needs, in one hook. Render it with <DynamicForm form={form} />.
+ * All the state a schema-driven form needs, in one hook. Render it with <DynamicTag form={form} />.
  *
- *   const form = useDynamicForm({
+ *   const form = useDynamicTag({
  *     schema,                                  // form layout (rows / columns / fields)
  *     buttons,                                 // optional schema rendered once after the form
  *     messages: textEn,                        // optional page text for "@key" schema strings
@@ -51,9 +51,9 @@ const buildCopyHeading = (copyId, index, t) => ({
  *   t            the current translator: t('repeat.entry', { n: 2 })
  *   language     current language code
  *   setLanguage  (code) => Promise — load and activate a language from `languages`
- *   errors, values, fullSchema, parserProps   used by <DynamicForm>; available for custom rendering
+ *   errors, values, fullSchema, parserProps   used by <DynamicTag>; available for custom rendering
  */
-export const useDynamicForm = ({
+export const useDynamicTag = ({
   schema = [],
   buttons = [],
   messages,
@@ -124,7 +124,7 @@ export const useDynamicForm = ({
     if (code === lang.code) return;
     const source = languages[code];
     if (!source) {
-      console.warn(`Language "${code}" is not in useDynamicForm({ languages }).`);
+      console.warn(`Language "${code}" is not in useDynamicTag({ languages }).`);
       return;
     }
     const loaded = typeof source === 'function' ? await source() : source;

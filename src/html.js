@@ -100,7 +100,7 @@ const applyNodeState = (node, { props: overrides = {}, hidden } = {}) => {
 //   (setNodeProps / hideNode / showNode / toggleNode / removeNode / restoreNode)
 // nested: set internally so only top-level rows get wrapped in a <Container>
 const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFieldChange, values, pendingValues, nodeState, nested = false }) => {
-  // The form's translator, provided by <DynamicForm> (library English outside a form)
+  // The form's translator, provided by <DynamicTag> (library English outside a form)
   const t = useTranslator();
   if (!schemaNode) return null;
 

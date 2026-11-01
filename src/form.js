@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { Form, Button } from "react-bootstrap";
-// Translation: each form supplies its translator via context (see i18n.js / useDynamicForm)
+// Translation: each form supplies its translator via context (see i18n.js / useDynamicTag)
 import { defaultTranslator, translateProps, useTranslator } from "./i18n";
 
 // Label text with a red * when the field is required

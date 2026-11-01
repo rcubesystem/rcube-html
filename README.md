@@ -18,7 +18,7 @@ Works in Next.js App Router (the bundle is marked `"use client"`).
 
 ```jsx
 "use client";
-import { useDynamicForm, DynamicForm } from 'rcube-html';
+import { useDynamicTag, DynamicTag } from 'rcube-html';
 
 const schema = [
   { type: 'row', id: 'row-name', children: [
@@ -42,12 +42,12 @@ const buttons = [
 ];
 
 export default function SignUp() {
-  const form = useDynamicForm({
+  const form = useDynamicTag({
     schema,
     buttons,
     onSubmit: (entries) => console.log(entries), // [{ firstName: "JANE", email: "jane@example.com" }]
   });
-  return <DynamicForm form={form} />;
+  return <DynamicTag form={form} />;
 }
 ```
 
@@ -121,10 +121,10 @@ Any `on…` prop in the schema names an action:
 { type: 'InputField', id: 'zip', props: { name: 'zip', onChange: 'zipChanged()', onBlur: 'zipBlurred()' } }
 ```
 
-Define actions in `useDynamicForm`. Each is called as `(event, context)` where `context` is `{ name, value, values, fieldRefs }`:
+Define actions in `useDynamicTag`. Each is called as `(event, context)` where `context` is `{ name, value, values, fieldRefs }`:
 
 ```js
-const form = useDynamicForm({
+const form = useDynamicTag({
   schema,
   actions: (api) => ({
     zipChanged: (e, { name, value }) => console.log(name, value),
@@ -153,7 +153,7 @@ const form = useDynamicForm({
 ## Repeatable entries
 
 ```js
-const form = useDynamicForm({ schema, buttons, repeatable: true });
+const form = useDynamicTag({ schema, buttons, repeatable: true });
 // schema button: { type: 'ButtonField', id: 'add', props: { text: '@repeat.addAnother', onClick: 'addCopy()' } }
 ```
 
@@ -180,7 +180,7 @@ export default { ...libEs, form: { firstName: { label: 'Nombre' } } };
 ```js
 { type: 'InputField', id: 'first', props: { name: 'firstName', label: '@form.firstName.label' } }
 
-const form = useDynamicForm({
+const form = useDynamicTag({
   schema,
   messages: textEn,                               // starting text and fallback
   language: 'en',
@@ -189,7 +189,7 @@ const form = useDynamicForm({
 // switch: form.setLanguage('es'), or a button { "data-lang": "es", "onClick": "switchLanguage()" }
 ```
 
-Missing keys fall back to `messages`, then to the library English. The library ships `lang_en` and `lang_es`; copy `rcube-html/lang/lang_en` to add another language. Each `<DynamicForm>` uses its own form's language.
+Missing keys fall back to `messages`, then to the library English. The library ships `lang_en` and `lang_es`; copy `rcube-html/lang/lang_en` to add another language. Each `<DynamicTag>` uses its own form's language.
 
 ## Custom components
 
@@ -205,8 +205,8 @@ Field components must `forwardRef` to their input element (or a `<fieldset>` for
 ## Rendering another schema with the same form
 
 ```jsx
-<DynamicForm form={form} schema={toolbarSchema} />  // shares actions, element state and language
-<DynamicForm form={form} />                         // the form itself
+<DynamicTag form={form} schema={toolbarSchema} />  // shares actions, element state and language
+<DynamicTag form={form} />                         // the form itself
 ```
 
 ## License
