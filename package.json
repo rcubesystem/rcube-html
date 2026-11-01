@@ -14,6 +14,7 @@
     "nextjs"
   ],
   "license": "MIT",
+  "author": "Riyaz Hameed <riyaz.mohamed@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rcubesystem/rcube-html.git"
