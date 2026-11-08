@@ -170,6 +170,7 @@ const messages = {
 
   // Calendar
   calendar: {
+    toggleSidebar: "Show or hide the side panel",
     today: "Today",
     previous: "Previous",
     next: "Next",

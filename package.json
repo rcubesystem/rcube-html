@@ -1,6 +1,6 @@
 {
   "name": "rcube-html",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Schema-driven React + Bootstrap forms and layouts: validation, conditional fields, dependent selects, repeatable entries, runtime element changes and i18n.",
   "keywords": [
     "react",

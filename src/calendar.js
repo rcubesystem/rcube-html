@@ -31,6 +31,9 @@ import {
 const CAL_CSS = `
 .rcube-cal{display:flex;gap:16px;font-size:.875rem;position:relative}
 .rcube-cal .rc-side{width:220px;flex:none}
+.rcube-cal .rc-menubtn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit}
+.rcube-cal .rc-menubtn:hover,.rcube-cal .rc-menubtn:focus-visible{background:var(--bs-secondary-bg,#e9ecef)}
+.rcube-cal .rc-menubtn svg{display:block}
 .rcube-cal .rc-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
 .rcube-cal .rc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--bs-border-color);border-radius:8px;overflow:hidden;background:var(--bs-body-bg);transition:opacity .15s}
 .rcube-cal.rc-loading .rc-body{opacity:.6}
@@ -217,9 +220,12 @@ export const Calendar = ({
   slotMinutes = 30, snapMinutes = 15, defaultDuration = 60, workingHours, nowIndicator = true, agendaDays = 30,
   locale, hour12,
   sidebar = true, searchable = true, editable = true, selectable = true, eventEditor = true, autoUpdate = true,
+  // sidebarOpen: true / false shows / hides the left panel; unset: shown on large screens (lg and up), hidden on small
+  // ones. sidebarToggle: the hamburger button before "Today" that shows / hides it (onSidebarToggle({ open })).
+  sidebarOpen: sidebarOpenProp, sidebarToggle = true,
   keyboardShortcuts = true,
   className = '', style,
-  onRangeChange, onViewChange, onEventClick, onSlotClick, onSelect, onEventCreate, onEventUpdate, onEventDelete, onCalendarToggle,
+  onRangeChange, onViewChange, onEventClick, onSlotClick, onSelect, onEventCreate, onEventUpdate, onEventDelete, onCalendarToggle, onSidebarToggle,
 }) => {
   const t = useTranslator();
   const rootRef = useRef(null);
@@ -820,6 +826,15 @@ export const Calendar = ({
   }
 
   // ---------------------------------------------------------------- toolbar / sidebar / popovers
+  // The left panel: open / closed when set (by the prop, setNodeProps or the hamburger), else by screen size
+  const sidebarOpen = cur('sidebarOpen', sidebarOpenProp);
+  const toggleSidebar = () => {
+    const shown = typeof sidebarOpen === 'boolean' ? sidebarOpen
+      : typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(min-width: 992px)').matches : true;
+    setProps({ sidebarOpen: !shown });
+    onSidebarToggle?.({ calendar: nodeId, open: !shown });
+  };
+  const sideClass = sidebarOpen === true ? 'rc-side d-block' : sidebarOpen === false ? 'rc-side d-none' : 'rc-side d-none d-lg-block';
   const title = view === 'day' ? fmt.full.format(date)
     : view === 'week' ? rangeText(range.start, addDays(range.end, -1))
       : view === 'month' ? fmt.monthYear.format(date)
@@ -980,7 +995,7 @@ export const Calendar = ({
   );
 
   const sidebarView = sidebar && (
-    <div className="rc-side d-none d-lg-block">
+    <div className={sideClass} id={nodeId ? `${nodeId}-side` : undefined}>
       {editable && eventEditor && (
         <Button variant="primary" className="mb-3 px-4 rounded-pill shadow-sm" onClick={createNow}>{`+ ${t('calendar.create')}`}</Button>
       )}
@@ -1006,6 +1021,14 @@ export const Calendar = ({
 
   const toolbar = (
     <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+      {sidebar && sidebarToggle && (
+        <button type="button" className="rc-menubtn" onClick={toggleSidebar} title={t('calendar.toggleSidebar')} aria-label={t('calendar.toggleSidebar')}
+          aria-expanded={typeof sidebarOpen === 'boolean' ? sidebarOpen : undefined} aria-controls={nodeId ? `${nodeId}-side` : undefined}>
+          <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+          </svg>
+        </button>
+      )}
       <Button size="sm" variant="outline-secondary" className="rounded-pill px-3" onClick={() => goto(today)} title="T">{t('calendar.today')}</Button>
       <div className="d-flex">
         <button type="button" className="rc-iconbtn" aria-label={t('calendar.previous')} onClick={() => goto(shiftDate(view, date, -1, { agendaDays }))}>‹</button>

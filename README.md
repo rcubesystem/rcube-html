@@ -1,4 +1,4 @@
-# rcube-html
+# rcube-html: An Open-Source, JSON-Driven HTML Page Renderer
 
 Schema-driven forms and layouts for **React + React-Bootstrap**. Describe rows, columns, fields and buttons as JSON-like objects; rcube-html renders them with validation, conditional fields, dependent selects, input masks, repeatable entries, runtime element changes and multi-language text.
 
@@ -340,6 +340,8 @@ A calendar with day, week, month, year and schedule (agenda) views: a sidebar wi
     { id: 'offsite', title: 'Offsite', start: '2026-11-05', end: '2026-11-06', allDay: true },   // end = last day
   ],
   sidebar: true, searchable: true, editable: true, selectable: true, eventEditor: true, autoUpdate: true,
+  sidebarToggle: true,          // the hamburger before Today shows / hides the left panel
+  // sidebarOpen: true | false    // fixed open / closed; unset: open on large screens, closed on small ones
   keyboardShortcuts: true,
   onRangeChange: 'loadEvents()', onViewChange: 'viewChanged()',
   onEventClick: 'eventClicked()', onSlotClick: 'slotClicked()', onSelect: 'rangeSelected()',
@@ -366,6 +368,7 @@ A calendar with day, week, month, year and schedule (agenda) views: a sidebar wi
 | `onEventUpdate` | `{ event, previous, change: 'move' \| 'resize' \| 'edit' }` |
 | `onEventDelete` | `{ event, scope: 'all' }` or `{ event, scope: 'one', occurrence, series }` |
 | `onCalendarToggle` | `{ calendarId, hidden }` |
+| `onSidebarToggle` | `{ open }` (the hamburger showed / hid the left panel) |
 
 **Actions** (all take the calendar's `id`):
 

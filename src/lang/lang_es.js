@@ -142,6 +142,7 @@ const messages = {
   },
 
   calendar: {
+    toggleSidebar: "Mostrar u ocultar el panel lateral",
     today: "Hoy",
     previous: "Anterior",
     next: "Siguiente",
