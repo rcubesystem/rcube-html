@@ -110,6 +110,9 @@ const messages = {
 
   // FileUploadField
   upload: {
+    fileTitle: "File title",
+    fileTitlePlaceholder: "Optional, e.g. Worksheet 1",
+    fileTitleHint: "Optional, up to {max} characters: given to the next file you add.",
     dropHere: "Drag & drop files here",
     dropNow: "Drop to add",
     or: "or",

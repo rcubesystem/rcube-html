@@ -492,13 +492,14 @@ Live demo: [rcube-html.com/file-upload](https://rcube-html.com/file-upload)
 } }
 ```
 
+- **File title** (`fileTitle`, shown by default): an optional title box above the drop zone (`fileTitleMax`, 50 characters; `fileTitleLabel`, `fileTitlePlaceholder`). The files added next get the title typed there, then the box clears. `onUpload` gets it as `title`, the built-in uploader sends it as the form field `title`, each file in the value has `title`, and `defaultFiles` can carry one. The list shows the title above the file name. `fileTitle: false` hides it.
 - **Built-in uploader** (instead of `onUpload`): `uploadUrl`, `uploadMethod` (`POST`), `uploadFieldName` (`file`), `uploadHeaders`, `uploadData` (extra form fields), `withCredentials`. The JSON response becomes the file's `response`; a `url` (or `location`) in it becomes the file's link.
 - **No uploader**: files are kept and submitted with the form as `File` objects (`file` on each entry).
 - Sizes accept bytes or `'500KB'`, `'5MB'`, `'1GB'`. Rejected files stay in the list with the reason until dismissed.
-- **Value** (submitted entries, `getFiles`, the `onChange` context): `[{ id, name, size, type, status, progress, url?, response?, file? }]` — rejected and failed files are left out.
+- **Value** (submitted entries, `getFiles`, the `onChange` context): `[{ id, name, size, type, status, progress, title?, url?, response?, file? }]` — rejected and failed files are left out.
 - **Validation on Submit**: blocks while files are uploading, not yet uploaded (`autoUpload: false`) or failed; then `required` / `minFiles`. Messages: `requiredMessage`, `minFilesMessage`, `uploadingMessage`, `pendingMessage`, `failedMessage`.
 
-**Uploading in an action**: `onUpload` gets `{ file, name, size, type, id, attempt, onProgress(percent), signal }` and returns (or resolves to) the server's answer; throw / reject to mark the file as failed. `signal` aborts when the user cancels. `uploadWithXhr` (exported) reports progress:
+**Uploading in an action**: `onUpload` gets `{ file, name, size, type, title, id, attempt, onProgress(percent), signal }` and returns (or resolves to) the server's answer; throw / reject to mark the file as failed. `signal` aborts when the user cancels. `uploadWithXhr` (exported) reports progress:
 
 ```js
 import { uploadWithXhr } from 'rcube-html';

@@ -86,6 +86,9 @@ const messages = {
   },
 
   upload: {
+    fileTitle: "Título del archivo",
+    fileTitlePlaceholder: "Opcional, p. ej. Hoja de trabajo 1",
+    fileTitleHint: "Opcional, hasta {max} caracteres: se da al siguiente archivo que añadas.",
     dropHere: "Arrastra y suelta archivos aquí",
     dropNow: "Suelta para añadir",
     or: "o",

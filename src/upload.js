@@ -14,12 +14,17 @@ import { useTranslator } from "./i18n";
  *                                           //   uploadFieldName, uploadHeaders, uploadData, withCredentials)
  *     "variant": "list", "compact": false, "dropAnywhere": false, "paste": true, "directory": false, "capture": "environment",
  *     "title": "Drag & drop files here", "hint": "PDF or images", "buttonText": "Browse",
+ *     "fileTitle": true, "fileTitleMax": 50, "fileTitleLabel": "File title", "fileTitlePlaceholder": "...",
  *     "defaultFiles": [ { "name": "contract.pdf", "size": 120000, "url": "/files/contract.pdf" } ],
  *     "onFilesAdded": "...", "onFileRejected": "...", "onUploadComplete": "...", "onUploadError": "...",
  *     "onAllComplete": "...", "onRemove": "...", "onFileClick": "...", "onValidate": "...", "onChange": "..." } }
  *
+ * File title (fileTitle, shown unless false): an optional title (at most fileTitleMax, 50) typed before adding files;
+ * the files added next get it (then the box clears). onUpload gets it as `title`, the built-in uploader sends it as
+ * the form field "title", and each file in the value has it. The list shows "title" over the file name.
+ *
  * The field's value (getFormEntries, getFieldValue, onChange context) is the list of files:
- *   [{ id, name, size, type, status, progress, url?, response?, file? }]
+ *   [{ id, name, size, type, status, progress, title?, url?, response?, file? }]
  * setFieldValue(name, [{ name, size, url }]) shows files that are already uploaded; "" clears the field.
  * From code: actions.uploadFiles(name), clearFiles(name), removeFile(name, fileId), retryFile(name, fileId),
  * openFilePicker(name), getFiles(name).
@@ -155,6 +160,7 @@ export const FileUploadField = forwardRef(function FileUploadField({
   variant = 'list', compact = false, showThumbnails = true, preview = true,
   dropAnywhere = false, paste = true, directory = false, capture,
   title, hint, buttonText, defaultFiles, locale,
+  fileTitle = true, fileTitleMax = 50, fileTitleLabel, fileTitlePlaceholder,
   className = '', style,
   onUpload, onFilesAdded, onFileRejected, onUploadComplete, onUploadError, onAllComplete, onRemove, onFileClick, onValidate,
 }, ref) {
@@ -163,7 +169,7 @@ export const FileUploadField = forwardRef(function FileUploadField({
   const inputRef = useRef(null);
   const fromExisting = (f) => ({
     id: String(f.id ?? newFileId()), name: f.name || 'file', size: f.size ?? null, type: f.type || '',
-    status: 'done', progress: 100, url: f.url, response: f.response, existing: true,
+    status: 'done', progress: 100, url: f.url, response: f.response, existing: true, ...(f.title && { title: String(f.title) }),
   });
   const [files, setFiles] = useState(() => (defaultFiles || []).map(fromExisting));
   const filesRef = useRef(files);
@@ -172,6 +178,11 @@ export const FileUploadField = forwardRef(function FileUploadField({
   const [overPage, setOverPage] = useState(false);
   const [previewing, setPreviewing] = useState(null);
   const [announce, setAnnounce] = useState('');
+  // The title for the next files added (fileTitle)
+  const [nextTitle, setNextTitle] = useState('');
+  const nextTitleRef = useRef('');
+  nextTitleRef.current = nextTitle;
+  const titleMax = Math.max(1, Number(fileTitleMax) || 50);
   const controllers = useRef(new Map()); // id -> AbortController
   const started = useRef(new Set()); // ids whose upload is running
 
@@ -184,7 +195,7 @@ export const FileUploadField = forwardRef(function FileUploadField({
   const update = (fileId, patch) => setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, ...patch } : f)));
   const publicOf = (f) => ({
     id: f.id, name: f.name, size: f.size, type: f.type, status: f.status, progress: f.progress,
-    ...(f.url && { url: f.url }), ...(f.response !== undefined && { response: f.response }), ...(f.error && { error: f.error }),
+    ...(f.title && { title: f.title }), ...(f.url && { url: f.url }), ...(f.response !== undefined && { response: f.response }), ...(f.error && { error: f.error }),
     ...(f.file && { file: f.file }),
   });
   // The field's value: files that count (not rejected, not failed)
@@ -197,9 +208,9 @@ export const FileUploadField = forwardRef(function FileUploadField({
   }, []);
 
   // ---------------------------------------------------------------- adding
-  const makeEntry = (file) => ({
+  const makeEntry = (file, fileTitleText = '') => ({
     id: newFileId(), file, name: file.name || 'pasted-file', size: file.size, type: file.type || '',
-    status: 'queued', progress: 0, attempts: 0,
+    status: 'queued', progress: 0, attempts: 0, ...(fileTitleText && { title: fileTitleText }),
     thumb: showThumbnails && /^image\//.test(file.type || '') && typeof URL !== 'undefined' && URL.createObjectURL ? URL.createObjectURL(file) : null,
   });
 
@@ -224,9 +235,11 @@ export const FileUploadField = forwardRef(function FileUploadField({
     let total = kept.reduce((sum, f) => sum + (f.size || 0), 0);
     const accepted = [];
     const rejected = [];
+    // the title typed before adding goes with these files
+    const given = fileTitle ? String(nextTitleRef.current || '').trim().slice(0, titleMax) : '';
     incoming.forEach((file) => {
       const problem = !multiple && accepted.length ? ['count', t('upload.onlyOne')] : problemWith(file, [...kept, ...accepted], total);
-      const entry = makeEntry(file);
+      const entry = makeEntry(file, given);
       if (problem) {
         revoke(entry);
         rejected.push({ ...entry, thumb: null, status: 'rejected', reason: problem[0], error: problem[1] });
@@ -242,6 +255,7 @@ export const FileUploadField = forwardRef(function FileUploadField({
     } else {
       setFiles((prev) => [...prev.filter((f) => f.status !== 'rejected'), ...accepted, ...rejected]);
     }
+    if (accepted.length && given) setNextTitle('');
     if (accepted.length) onFilesAdded?.({ field: name, files: accepted.map(publicOf), source });
     rejected.forEach((r) => onFileRejected?.({ field: name, file: publicOf(r), reason: r.reason, message: r.error }));
     setAnnounce([
@@ -263,13 +277,13 @@ export const FileUploadField = forwardRef(function FileUploadField({
       if (value !== last) { last = value; update(entry.id, { progress: value }); }
     };
     const payload = {
-      field: name, id: entry.id, file: entry.file, name: entry.name, size: entry.size, type: entry.type,
+      field: name, id: entry.id, file: entry.file, name: entry.name, size: entry.size, type: entry.type, title: entry.title || '',
       attempt: entry.attempts + 1, onProgress, signal: controller.signal,
     };
     const run = onUpload
       ? Promise.resolve().then(() => onUpload(payload))
       : uploadWithXhr({
-        url: uploadUrl, method: uploadMethod, fieldName: uploadFieldName, headers: uploadHeaders, data: uploadData,
+        url: uploadUrl, method: uploadMethod, fieldName: uploadFieldName, headers: uploadHeaders, data: { ...(uploadData || {}), ...(entry.title && { title: entry.title }) },
         withCredentials, file: entry.file, fileName: entry.name, onProgress, signal: controller.signal,
       });
     run.then((response) => {
@@ -483,7 +497,8 @@ export const FileUploadField = forwardRef(function FileUploadField({
           {thumbOf(f)}
           <div className="rc-card-actions">{actionsOf(f)}</div>
           <div className="p-2">
-            <div className="small fw-semibold text-truncate" title={f.name}>{f.name}</div>
+            {f.title && <div className="small fw-semibold text-truncate" title={f.title}>{f.title}</div>}
+            <div className={`small text-truncate ${f.title ? 'text-muted' : 'fw-semibold'}`} title={f.name}>{f.name}</div>
             <div className="small" style={{ color: statusColor(f) }}>{statusText(f)}{f.size != null && !bad(f) && <span className="text-muted">{` · ${formatBytes(f.size, locale)}`}</span>}</div>
             {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-progress mt-1" aria-label={f.name} />}
           </div>
@@ -496,10 +511,11 @@ export const FileUploadField = forwardRef(function FileUploadField({
         <li key={f.id} className={`rc-file ${bad(f) ? 'rc-bad' : ''}`}>
           {thumbOf(f)}
           <div className="flex-grow-1" style={{ minWidth: 0 }}>
+            {f.title && <div className="small fw-semibold text-truncate" title={f.title}>{f.title}</div>}
             <div className="d-flex gap-2 align-items-baseline">
               {f.url && f.status === 'done'
-                ? <a href={f.url} target="_blank" rel="noopener noreferrer" className="small fw-semibold text-truncate" title={f.name}>{f.name}</a>
-                : <span className="small fw-semibold text-truncate" title={f.name}>{f.name}</span>}
+                ? <a href={f.url} target="_blank" rel="noopener noreferrer" className={`small text-truncate ${f.title ? '' : 'fw-semibold'}`} title={f.name}>{f.name}</a>
+                : <span className={`small text-truncate ${f.title ? 'text-muted' : 'fw-semibold'}`} title={f.name}>{f.name}</span>}
               <span className="small text-muted ms-auto text-nowrap" style={{ flex: "none" }}>{formatBytes(f.size, locale)}</span>
             </div>
             {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-progress my-1" aria-label={f.name} />}
@@ -525,6 +541,15 @@ export const FileUploadField = forwardRef(function FileUploadField({
     <Form.Group className={`rc-upload mb-3 ${className}`.trim()} style={style}>
       <style>{UPLOAD_CSS}</style>
       {label && <Form.Label htmlFor={`${fieldId}-input`}>{label}{required && <span className="text-danger"> *</span>}</Form.Label>}
+      {fileTitle && (
+        <div className="mb-2" style={{ maxWidth: 420 }}>
+          <Form.Label htmlFor={`${fieldId}-title`} className="small mb-1">{fileTitleLabel || t('upload.fileTitle')}</Form.Label>
+          <Form.Control id={`${fieldId}-title`} size="sm" value={nextTitle} maxLength={titleMax} disabled={disabled}
+            placeholder={fileTitlePlaceholder || t('upload.fileTitlePlaceholder')} aria-describedby={`${fieldId}-title-hint`}
+            onChange={(e) => setNextTitle(e.target.value.slice(0, titleMax))} />
+          <div id={`${fieldId}-title-hint`} className="small text-muted">{t('upload.fileTitleHint', { max: titleMax })}</div>
+        </div>
+      )}
       <div ref={setRef} id={fieldId} data-rcube-upload="" data-uploading={active || undefined} data-pending={(canUpload && queued.length > 0) || undefined}
         data-failed={failed.length > 0 || undefined}
         role="button" tabIndex={disabled ? -1 : 0} aria-disabled={disabled || undefined}
