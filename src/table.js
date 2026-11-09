@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Table } from "react-bootstrap";
+import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Spinner, Table } from "react-bootstrap";
 import { InputField, SelectField, runAction } from "./form";
 import { useTranslator } from "./i18n";
 import {
@@ -23,6 +23,14 @@ import {
  *
  * Rows / columns / selection / hidden columns changed at runtime live in the form's element state
  * (actions.addRow, removeRow, updateRow, setRows, addColumn, removeColumn, toggleColumn, selectRows, ...).
+ *
+ * Server paging ("serverSide": true): the server pages, sorts and searches; "rows" is the current page only.
+ *   "totalRows": 1000, "page": 1        the pager's size and position (from the server's answer)
+ *   "onQueryChange": "loadPage()"        -> { page, pageSize, sort, query } when the person changes page, rows per
+ *                                           page, sort or search (search waits "searchDelay" ms, default 350)
+ *   actions.setPageRows(id, { rows, totalRows, page })   shows the answer (and ends loading)
+ *   actions.setTableLoading(id, true)                     a spinner over the table, the pager disabled ("loading")
+ * The table puts itself in loading as soon as it asks; CSV export, totals and "select all" work on the page shown.
  */
 
 const BREAKPOINTS = ['sm', 'md', 'lg', 'xl', 'xxl'];
@@ -225,7 +233,8 @@ export const DataTable = ({
   striped = true, bordered = false, hover = true, size, variant,
   rowRules, hoverRow, hoverColumn, hoverCell, selectedLook = { variant: 'active' }, toolbarActions,
   className = '', style,
-  onRowClick, onSelectionChange, onCellChange, onPageChange, onSortChange,
+  serverSide = false, totalRows, page: serverPage, loading = false, searchDelay = 350,
+  onRowClick, onSelectionChange, onCellChange, onPageChange, onSortChange, onQueryChange, onSearchChange,
 }) => {
   const t = useTranslator();
   const tableName = name || nodeId;
@@ -239,39 +248,72 @@ export const DataTable = ({
 
   const [sort, setSort] = useState(null); // { key, dir: 'asc' | 'desc' }
   const [query, setQuery] = useState('');
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(serverPage || 1);
   const [pageSize, setPageSize] = useState(initialPageSize);
+  // server paging: the page the server answered with, and "asked, not answered yet"
+  const [asking, setAsking] = useState(false);
+  useEffect(() => { if (serverSide && serverPage) setPage(serverPage); }, [serverSide, serverPage]);
+  useEffect(() => { setAsking(false); }, [rows, totalRows, serverPage]);
+  useEffect(() => { if (!loading) setAsking(false); }, [loading]); // e.g. setTableLoading(id, false) after a failed call
+  const busy = serverSide && (loading || asking);
+  const searchTimer = useRef(null);
+  useEffect(() => () => clearTimeout(searchTimer.current), []);
+  // ask the server for { page, pageSize, sort, query } (the current values, with changes)
+  const ask = (change) => {
+    const next = { page, pageSize, sort, query: query.trim(), ...change };
+    setAsking(true);
+    actions?.setTableLoading?.(nodeId, true);
+    onQueryChange?.(next);
+  };
 
-  // Search across visible columns (formatted text), then sort
+  // Search across visible columns (formatted text), then sort (server paging: the server did both)
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return allRows;
+    if (serverSide || !q) return allRows;
     return allRows.filter((row) => visible.some((column) => {
       const text = column.template ? interpolate(column.template, row) : formatValue(row[column.key], column, t);
       return text.toLowerCase().includes(q);
     }));
-  }, [allRows, visible, query, t]);
+  }, [allRows, visible, query, t, serverSide]);
 
   const sorted = useMemo(() => {
-    if (!sort) return filtered;
+    if (serverSide || !sort) return filtered;
     const factor = sort.dir === 'desc' ? -1 : 1;
     return [...filtered].sort((a, b) => factor * compareValues(a[sort.key], b[sort.key]));
-  }, [filtered, sort]);
+  }, [filtered, sort, serverSide]);
 
   const paged = pageSize > 0;
-  const pageCount = paged ? Math.max(1, Math.ceil(sorted.length / pageSize)) : 1;
+  const total = serverSide ? Math.max(0, Number(totalRows ?? sorted.length) || 0) : sorted.length;
+  const pageCount = paged ? Math.max(1, Math.ceil(total / pageSize)) : 1;
   const currentPage = Math.min(page, pageCount);
-  const pageRows = paged ? sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize) : sorted;
+  const pageRows = serverSide || !paged ? sorted : sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   const goToPage = (next) => {
+    if (busy || next === currentPage) return;
     setPage(next);
     onPageChange?.({ page: next, pageSize });
+    if (serverSide) ask({ page: next });
+  };
+  const changePageSize = (next) => {
+    setPageSize(next);
+    setPage(1);
+    if (serverSide) ask({ page: 1, pageSize: next });
+  };
+  const changeQuery = (text) => {
+    setQuery(text);
+    setPage(1);
+    if (!serverSide) return;
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      onSearchChange?.({ query: text.trim() });
+      ask({ page: 1, query: text.trim() });
+    }, searchDelay);
   };
 
   // After a failed Submit, show the page holding this table's first error
   const firstErrorKey = Object.keys(errors).find((key) => errors[key] && key.startsWith(`${tableName}.`));
   useEffect(() => {
-    if (!firstErrorKey || !paged) return;
+    if (!firstErrorKey || !paged || serverSide) return;
     const rowPart = firstErrorKey.slice(tableName.length + 1, firstErrorKey.lastIndexOf('.'));
     const index = sorted.findIndex((row) => rowKeyOf(row, rowKey) === rowPart);
     if (index >= 0) setPage(Math.floor(index / pageSize) + 1);
@@ -279,11 +321,12 @@ export const DataTable = ({
   }, [firstErrorKey]);
 
   const toggleSort = (column) => {
-    if (column.actions || !(column.sortable ?? sortable)) return;
+    if (column.actions || !(column.sortable ?? sortable) || busy) return;
     const next = sort?.key !== column.key ? { key: column.key, dir: 'asc' }
       : sort.dir === 'asc' ? { key: column.key, dir: 'desc' } : null;
     setSort(next);
     onSortChange?.({ sort: next });
+    if (serverSide) { setPage(1); ask({ page: 1, sort: next }); }
   };
 
   const setSelection = (keys) => {
@@ -416,7 +459,7 @@ export const DataTable = ({
       {searchable && (
         <Form.Control size="sm" type="search" value={query} style={{ maxWidth: 220 }}
           placeholder={searchPlaceholder || t('table.search')} aria-label={searchPlaceholder || t('table.search')}
-          onChange={(e) => { setQuery(e.target.value); setPage(1); }} />
+          onChange={(e) => changeQuery(e.target.value)} />
       )}
       {columnToggle && (
         <Dropdown autoClose="outside">
@@ -577,27 +620,29 @@ export const DataTable = ({
   );
 
   // ---------------------------------------------------------------- pagination
-  const from = sorted.length ? (currentPage - 1) * (paged ? pageSize : sorted.length) + 1 : 0;
-  const to = paged ? Math.min(currentPage * pageSize, sorted.length) : sorted.length;
+  const from = total ? (serverSide ? (currentPage - 1) * pageSize + (pageRows.length ? 1 : 0) : (currentPage - 1) * (paged ? pageSize : total) + 1) : 0;
+  const to = serverSide ? (currentPage - 1) * pageSize + pageRows.length : paged ? Math.min(currentPage * pageSize, total) : total;
   const pagination = paged && (pageCount > 1 || pageSizeOptions) && (
     <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <small className="text-muted">{t('table.showing', { from, to, total: sorted.length })}</small>
+      <small className="text-muted">
+        {busy ? <><Spinner animation="border" size="sm" className="me-1" />{t('table.loading')}</> : t('table.showing', { from, to, total })}
+      </small>
       <div className="d-flex align-items-center gap-2">
         {pageSizeOptions && (
-          <Form.Select size="sm" value={pageSize} style={{ width: 'auto' }} aria-label={t('table.rowsPerPage')}
-            onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}>
+          <Form.Select size="sm" value={pageSize} style={{ width: 'auto' }} aria-label={t('table.rowsPerPage')} disabled={busy}
+            onChange={(e) => changePageSize(Number(e.target.value))}>
             {pageSizeOptions.map((option) => <option key={option} value={option}>{option}</option>)}
           </Form.Select>
         )}
         {pageCount > 1 && (
           <Pagination size="sm" className="mb-0">
-            <Pagination.First disabled={currentPage === 1} onClick={() => goToPage(1)} />
-            <Pagination.Prev disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)} />
+            <Pagination.First disabled={busy || currentPage === 1} onClick={() => goToPage(1)} />
+            <Pagination.Prev disabled={busy || currentPage === 1} onClick={() => goToPage(currentPage - 1)} />
             {pageNumbers(currentPage, pageCount).map((p, i) => (p === '…'
               ? <Pagination.Ellipsis key={`e${i}`} disabled />
-              : <Pagination.Item key={p} active={p === currentPage} onClick={() => goToPage(p)}>{p}</Pagination.Item>))}
-            <Pagination.Next disabled={currentPage === pageCount} onClick={() => goToPage(currentPage + 1)} />
-            <Pagination.Last disabled={currentPage === pageCount} onClick={() => goToPage(pageCount)} />
+              : <Pagination.Item key={p} active={p === currentPage} disabled={busy && p !== currentPage} onClick={() => goToPage(p)}>{p}</Pagination.Item>))}
+            <Pagination.Next disabled={busy || currentPage === pageCount} onClick={() => goToPage(currentPage + 1)} />
+            <Pagination.Last disabled={busy || currentPage === pageCount} onClick={() => goToPage(pageCount)} />
           </Pagination>
         )}
       </div>
@@ -607,11 +652,20 @@ export const DataTable = ({
   return (
     <div data-rcube-table={nodeId} className={`mb-3 ${className}`.trim()} style={style}>
       {toolbar}
-      <div className={stackAt ? `d-none d-${stackAt}-block` : undefined}
-        style={stickyHeader ? { maxHeight: maxHeight || 400, overflow: 'auto' } : undefined}>
-        {tableView}
+      <div className="position-relative" aria-busy={busy || undefined}>
+        <div className={stackAt ? `d-none d-${stackAt}-block` : undefined}
+          style={stickyHeader ? { maxHeight: maxHeight || 400, overflow: 'auto' } : undefined}>
+          {tableView}
+        </div>
+        {cardView}
+        {/* server paging: the previous page stays, dimmed, under a spinner until the next one arrives */}
+        {busy && (
+          <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center pt-5"
+            style={{ background: 'rgba(var(--bs-body-bg-rgb), .6)', zIndex: 2 }} role="status">
+            <Spinner animation="border" size="sm" className="me-2" /><span>{t('table.loading')}</span>
+          </div>
+        )}
       </div>
-      {cardView}
       {pagination}
     </div>
   );

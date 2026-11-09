@@ -227,7 +227,28 @@ Change colors at runtime: `updateRow(id, key, { _variant: 'success' })`, `update
 | `showColumn` / `hideColumn` / `toggleColumn(id, key)` | Column visibility |
 | `selectRows(id, keys)` / `clearSelection(id)` / `getSelectedRows(id)` / `removeSelectedRows(id)` | Selection |
 
-**Events** — `onRowClick` → `{ row, rowKey }`, `onCellChange` → `{ row, rowKey, column, value }`, `onSelectionChange` → `{ selected, rows }`, `onPageChange` → `{ page, pageSize }`, `onSortChange` → `{ sort }`.
+| `setPageRows(id, { rows, totalRows, page })` / `setTableLoading(id, loading)` | Server paging: show the server's page (ends loading) / show or end the loading spinner |
+
+**Events** — `onRowClick` → `{ row, rowKey }`, `onCellChange` → `{ row, rowKey, column, value }`, `onSelectionChange` → `{ selected, rows }`, `onPageChange` → `{ page, pageSize }`, `onSortChange` → `{ sort }`, `onQueryChange` → `{ page, pageSize, sort, query }` (server paging), `onSearchChange` → `{ query }` (server paging).
+
+**Server paging** — for large lists the server pages, sorts and searches, and the table holds only the page shown:
+
+```js
+{ type: 'DataTable', id: 'students', props: {
+  serverSide: true, rows: firstPage.rows, totalRows: firstPage.total, page: 1,   // the first page, loaded with the page
+  pageSize: 25, pageSizeOptions: [25, 50, 100], searchable: true, searchDelay: 350,
+  onQueryChange: 'loadPage()',                                                    // page, rows per page, sort, search
+  columns: [ { key: 'name', title: 'Name', sortable: true }, /* ... */ ],
+} }
+
+// actions
+loadPage: async ({ page, pageSize, sort, query }) => {            // the table shows its spinner already
+  const r = await fetch(`/api/students?page=${page}&pageSize=${pageSize}&q=${encodeURIComponent(query)}&sort=${sort?.key || ''}&dir=${sort?.dir || ''}`).then((x) => x.json());
+  actions.setPageRows('students', { rows: r.students, totalRows: r.total, page: r.page });
+},
+```
+
+Clicking page 3 from page 1 asks for page 3 only. While a page is loading, the previous rows stay dimmed under a spinner and the pager, rows-per-page and sorting wait; if the call fails, call `setTableLoading(id, false)`. `onQueryChange` runs as a form action, so the payload is its first argument.
 
 **Action buttons** — like form buttons, `onClick` names an action (`"editOrder()"`), called as `fn(event, context)`:
 

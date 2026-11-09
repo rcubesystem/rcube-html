@@ -848,6 +848,14 @@ export const createFormActions = ({ fieldRefs, setFormErrors, setFormValues, pen
 
     // Selection (row keys as strings)
     selectRows: (id, keys = []) => updateTable(id, () => ({ selected: keys.map(String) })),
+
+    // Server paging ("serverSide": true): show the server's page and end loading; or show / end loading
+    setPageRows: (id, { rows = [], totalRows, page } = {}) => updateTable(id, () => ({
+      rows: normalizeRows(rows), selected: [], loading: false,
+      ...(totalRows !== undefined && { totalRows }),
+      ...(page !== undefined && { page }),
+    })),
+    setTableLoading: (id, loading = true) => updateTable(id, () => ({ loading: Boolean(loading) })),
     clearSelection: (id) => updateTable(id, () => ({ selected: [] })),
     getSelectedRows: (id) => {
       const p = currentTable(id);

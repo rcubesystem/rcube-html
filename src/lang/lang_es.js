@@ -44,6 +44,7 @@ const messages = {
     total: "Total",
     showing: "Mostrando {from}–{to} de {total}",
     rowsPerPage: "Filas por página",
+    loading: "Cargando…",
     selectAll: "Seleccionar todas las filas de esta página",
     selectRow: "Seleccionar fila",
     yes: "Sí",

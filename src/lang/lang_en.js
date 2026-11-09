@@ -65,6 +65,7 @@ const messages = {
     // {from}, {to}, {total} = row numbers
     showing: "Showing {from}–{to} of {total}",
     rowsPerPage: "Rows per page",
+    loading: "Loading…",
     selectAll: "Select all rows on this page",
     selectRow: "Select row",
     yes: "Yes",
