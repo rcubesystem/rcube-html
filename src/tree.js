@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonGroup, Form, Spinner } from "react-bootstrap";
 import { useTranslator } from "./i18n";
 import { runAction } from "./form";
+import { toolbarButtons } from "./toolbar";
 import { matchesRule } from "./table";
 import { fileKindColor, formatBytes } from "./upload";
 import {
@@ -19,8 +20,11 @@ import {
  *     "onLoadChildren": "loadChildren()",   // (payload { node, parentId, cursor, offset, pageSize, more }) -> { children, hasMore, cursor }
  *     "selectionMode": "single", "checkboxes": false, "cascadeCheck": true, "showLines": true,
  *     "searchable": true, "searchMode": "client", "filters": [ { "id": "pdf", "label": "PDF", "when": { "field": "ext", "equals": "pdf" } } ],
+ *     "toolbar": true, "toolbarActions": [ { "text": "New folder", "onClick": "newFolder()", "needsSelection": true } ],
+ *                                           // your buttons -> (event, { tree, selected, checked, nodes })
  *     "pageSize": 50, "loadMore": "scroll", "draggable": true, "editable": true,
- *     "contextMenu": [ { "label": "Rename", "command": "rename" }, { "label": "Delete", "action": "deleteNode()" } ],
+ *     "contextMenu": [ { "text": "Rename", "command": "rename" }, { "text": "Delete", "onClick": "deleteNode()" } ],
+ *                    // like table buttons: "text" and "onClick" ("label" / "action" still work); "when" shows it for some nodes
  *     "onExpand": "...", "onCollapse": "...", "onSelect": "...", "onActivate": "...", "onNodeFocus": "...", "onCheck": "...",
  *     "onSearch": "...", "onFilterChange": "...", "onMove": "...", "onRename": "...", "onDelete": "...", "onNavigate": "...",
  *     "onScrollEnd": "...", "onNodeClick": "...", "onNodeDoubleClick": "...", "onContextMenu": "..." } }
@@ -141,7 +145,7 @@ export const Tree = ({
   draggable = false, editable = false, contextMenu = [],
   columns = DEFAULT_COLUMNS, contentView: contentViewProp = 'details', contentPaging = 'scroll', folder: folderProp = null,
   columnsPath: columnsPathProp = [], rootLabel,
-  toolbar = true, title, emptyText, locale, autoUpdate = true, scrollRequest,
+  toolbar = true, toolbarActions, title, emptyText, locale, autoUpdate = true, scrollRequest,
   className = '', style,
   onExpand, onCollapse, onSelect, onActivate, onNodeClick, onNodeDoubleClick, onNodeFocus, onCheck,
   onLoadChildren, onLoadMore, onSearch, onFilterChange, onMove, onRename, onDelete, onNavigate, onScrollEnd, onContextMenu,
@@ -484,7 +488,7 @@ export const Tree = ({
   };
   const runMenuItem = (item, node) => {
     setMenu(null);
-    const payload = payloadFor(node, { item: item.label });
+    const payload = payloadFor(node, { item: item.text ?? item.label });
     switch (item.command) {
       case 'rename': startRename(node); break;
       case 'expand': toggle(node, true); break;
@@ -492,7 +496,7 @@ export const Tree = ({
       case 'reload': reload(node); break;
       case 'open': activate(node); break;
       case 'delete': requestDelete(node); break;
-      default: if (item.action) runAction(actions, item.action, payload, { name: nodeId });
+      default: { const action = item.onClick ?? item.action; if (action) runAction(actions, action, payload, { name: nodeId, node }); }
     }
   };
   useEffect(() => {
@@ -765,6 +769,8 @@ export const Tree = ({
         <button key={f.id} type="button" className="rt-chip" aria-pressed={activeFilters.includes(String(f.id))} onClick={() => toggleFilter(f.id)}>{f.label}</button>
       ))}
       <div className="ms-auto d-flex flex-wrap gap-2 align-items-center">
+        {toolbarButtons(toolbarActions, actions, () => ({ tree: nodeId, name: nodeId, selected: selectedIds, checked: checkedIds, nodes: selectedIds.map(nodeById).filter(Boolean) }),
+          { hasSelection: selectedIds.length > 0 })}
         {selectionMode === 'multiple' && selectedIds.length > 1 && <span className="small text-muted">{t('tree.selectedCount', { count: selectedIds.length })}</span>}
         {checkboxes && checkedIds.length > 0 && <span className="small text-muted">{t('tree.checkedCount', { count: checkedIds.length })}</span>}
         {view === 'tree' && (
@@ -1062,8 +1068,8 @@ export const Tree = ({
         }
       }}>
       {menu.items.map((item, i) => (item.divider ? <hr key={`d${i}`} /> : (
-        <button key={item.label} type="button" role="menuitem" autoFocus={i === 0} disabled={item.disabled} onClick={() => runMenuItem(item, menu.node)}>
-          {item.icon && <span aria-hidden="true">{item.icon}</span>}{item.label}
+        <button key={item.key ?? item.text ?? item.label} type="button" role="menuitem" autoFocus={i === 0} disabled={item.disabled} onClick={() => runMenuItem(item, menu.node)}>
+          {item.icon && <span aria-hidden="true">{item.icon}</span>}{item.text ?? item.label}
         </button>
       )))}
     </div>

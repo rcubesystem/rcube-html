@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Spinner, Table } from "react-bootstrap";
 import { InputField, SelectField, runAction } from "./form";
 import { useTranslator } from "./i18n";
+import { toolbarButtons } from "./toolbar";
+import { VIEW_STORE_EVENT, clearView, hasView, readView, saveView } from "./viewStore";
 import {
   aggregate, cellFieldName, hiddenColumnsOf, interpolate, leafColumns, normalizeRows, rowKeyOf, stripRowIds,
 } from "./tableUtils";
@@ -15,7 +17,13 @@ import {
  *     "columns": [ { "key": "id", "title": "#" }, { "key": "qty", "title": "Qty", "editor": { "type": "number", "required": true } } ],
  *     "rows": [ { "id": 1, "qty": 2 } ],
  *     "pageSize": 10, "sortable": true, "searchable": true, "selectable": true, "removable": true,
+ *     ("selectable": "single": a radio button per row — one row at a time; clicking a row picks it too)
  *     "addable": true, "exportable": true, "columnToggle": true, "stackBelow": "md" } }
+ *
+ * The chosen row — selected (checkbox / radio) or, in a table without selection, the row last clicked (onRowClick;
+ * "highlightClicked": false turns that off) — is highlighted: tinted, bold, a bar at its start. Its colours: the app's
+ * (configureTableLook({ background, color, weight, accent }) or the --rc-table-selected-* CSS variables), or this
+ * table's own "selectedLook": { "background": "#fff3cd", "color": "#664d03" } (or { "variant": "warning" }).
  *
  * Schema buttons run form actions by name, called as fn(event, context):
  *   column  { "key": "actions", "actions": [ { "text": "Edit", "onClick": "editOrder()" } ] }  -> { table, name, row, rowKey }
@@ -31,6 +39,13 @@ import {
  *   actions.setPageRows(id, { rows, totalRows, page })   shows the answer (and ends loading)
  *   actions.setTableLoading(id, true)                     a spinner over the table, the pager disabled ("loading")
  * The table puts itself in loading as soon as it asks; CSV export, totals and "select all" work on the page shown.
+ *
+ * Starting view: "sort": { "key": "name", "dir": "desc" }, "query": "text" (the search box).
+ * Remembered view ("remember": "students" or true = the node id): the page, rows per page, sort and search are kept in
+ * this browser (viewStore.js: per signed-in person, a week from last use) and come back next time; a "Reset" button
+ * shows while anything is saved under the key (also the page's filters saved as "<key>:…") — it forgets them, goes
+ * back to the starting view and runs "onViewReset" ({ key }) so the page clears its filters. With server paging the
+ * page loads the saved view itself (readView(key) -> { page, pageSize, sort, query }).
  */
 
 const BREAKPOINTS = ['sm', 'md', 'lg', 'xl', 'xxl'];
@@ -70,6 +85,28 @@ export const formatValue = (value, column = {}, t) => {
  * hoverColumn / hoverCell and selectedLook. When several apply, later ones win:
  * row → column → cell rules → selected → hover row → hover column → hover cell.
  */
+/*
+ * The chosen row (selected, or the row last clicked): tinted, bold, with a bar at its start. Colours come from CSS
+ * variables, so an app sets them once (configureTableLook, or its own CSS) and a table can still pass "selectedLook":
+ *   --rc-table-selected-bg      background            (default: the primary colour, light; it stays while hovered)
+ *   --rc-table-selected-color   text                  (default: the emphasis colour)
+ *   --rc-table-selected-weight  font weight           (default: 600)
+ *   --rc-table-selected-accent  the bar at its start  (default: the primary colour; "transparent": none)
+ */
+const TABLE_CSS = `
+.rc-row-selected,.table>tbody>tr>.rc-row-selected,.table-hover>tbody>tr:hover>.rc-row-selected,.table-striped>tbody>tr:nth-of-type(odd)>.rc-row-selected{--bs-table-bg-state:var(--rc-table-selected-bg,rgba(var(--bs-primary-rgb),.2));--bs-table-color-state:var(--rc-table-selected-color,var(--bs-emphasis-color));font-weight:var(--rc-table-selected-weight,600)}
+.table>tbody>tr>.rc-row-selected:first-child{box-shadow:inset 3px 0 0 var(--rc-table-selected-accent,var(--bs-primary)),inset 0 0 0 9999px var(--bs-table-bg-state)}
+`;
+/** The app's colours for the chosen row: { background, color, weight, accent } (CSS values) on :root */
+export const configureTableLook = ({ background, color, weight, accent } = {}) => {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement.style;
+  const set = (name, value) => (value ? root.setProperty(name, String(value)) : root.removeProperty(name));
+  set('--rc-table-selected-bg', background); set('--rc-table-selected-color', color);
+  set('--rc-table-selected-weight', weight); set('--rc-table-selected-accent', accent);
+};
+const SELECTED_LOOK = { className: 'rc-row-selected' };
+
 const lookFrom = (look) => {
   if (!look) return null;
   const { variant, background, color, className, style } = look;
@@ -231,9 +268,10 @@ export const DataTable = ({
   exportable = false, columnToggle = false,
   responsive = true, stackBelow, stickyHeader = false, maxHeight,
   striped = true, bordered = false, hover = true, size, variant,
-  rowRules, hoverRow, hoverColumn, hoverCell, selectedLook = { variant: 'active' }, toolbarActions,
+  rowRules, hoverRow, hoverColumn, hoverCell, selectedLook = SELECTED_LOOK, highlightClicked = true, toolbarActions,
   className = '', style,
   serverSide = false, totalRows, page: serverPage, loading = false, searchDelay = 350,
+  sort: initialSort = null, query: initialQuery = '', remember, onViewReset,
   onRowClick, onSelectionChange, onCellChange, onPageChange, onSortChange, onQueryChange, onSearchChange,
 }) => {
   const t = useTranslator();
@@ -246,15 +284,47 @@ export const DataTable = ({
   const visible = leaves.filter((column) => !hidden.has(column.key));
   const selectedKeys = useMemo(() => new Set((selected || []).map(String)), [selected]);
 
-  const [sort, setSort] = useState(null); // { key, dir: 'asc' | 'desc' }
-  const [query, setQuery] = useState('');
-  const [page, setPage] = useState(serverPage || 1);
-  const [pageSize, setPageSize] = useState(initialPageSize);
+  // the remembered view (this browser), read once
+  const rememberKey = remember === true ? nodeId : remember || null;
+  const saved = useMemo(() => (rememberKey ? readView(rememberKey) : null), [rememberKey]);
+  const [sort, setSort] = useState(saved?.sort ?? initialSort); // { key, dir: 'asc' | 'desc' }
+  const [query, setQuery] = useState(saved?.query ?? initialQuery);
+  const [page, setPage] = useState(serverPage || saved?.page || 1);
+  const [pageSize, setPageSize] = useState(saved?.pageSize ?? initialPageSize);
+  // keep it while it differs from the starting view (back to it: nothing saved for the table itself)
+  useEffect(() => {
+    if (!rememberKey) return;
+    const plain = page === 1 && pageSize === initialPageSize && !query.trim() && JSON.stringify(sort) === JSON.stringify(initialSort);
+    saveView(rememberKey, plain ? null : { page, pageSize, sort, query });
+  }, [rememberKey, page, pageSize, sort, query]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [canReset, setCanReset] = useState(false);
+  useEffect(() => {
+    if (!rememberKey) return undefined;
+    const check = () => setCanReset(hasView(rememberKey));
+    check();
+    window.addEventListener(VIEW_STORE_EVENT, check);
+    return () => window.removeEventListener(VIEW_STORE_EVENT, check);
+  }, [rememberKey]);
+  const resetView = () => {
+    clearView(rememberKey);
+    const start = { page: 1, pageSize: initialPageSize, sort: initialSort, query: initialQuery };
+    setSort(start.sort); setQuery(start.query); setPage(1); setPageSize(start.pageSize);
+    if (serverSide) ask(start);
+    onViewReset?.({ key: rememberKey });
+    // the view (back to the start) saved nothing: the button goes
+    setTimeout(() => clearView(rememberKey), 0);
+  };
   // server paging: the page the server answered with, and "asked, not answered yet"
   const [asking, setAsking] = useState(false);
   useEffect(() => { if (serverSide && serverPage) setPage(serverPage); }, [serverSide, serverPage]);
-  useEffect(() => { setAsking(false); }, [rows, totalRows, serverPage]);
-  useEffect(() => { if (!loading) setAsking(false); }, [loading]); // e.g. setTableLoading(id, false) after a failed call
+  // the page whose rows are shown: when a call fails (loading ends, no new rows) the pager goes back to it
+  const shownPage = useRef(serverPage || 1);
+  useEffect(() => { shownPage.current = serverPage || shownPage.current; setAsking(false); }, [rows, totalRows, serverPage]);
+  useEffect(() => {
+    if (loading) return;
+    if (asking && serverSide) setPage(shownPage.current); // e.g. setTableLoading(id, false) after a failed call
+    setAsking(false);
+  }, [loading]); // eslint-disable-line react-hooks/exhaustive-deps
   const busy = serverSide && (loading || asking);
   const searchTimer = useRef(null);
   useEffect(() => () => clearTimeout(searchTimer.current), []);
@@ -334,7 +404,8 @@ export const DataTable = ({
     const keySet = new Set(keys);
     onSelectionChange?.({ selected: keys, rows: stripRowIds(allRows.filter((row) => keySet.has(rowKeyOf(row, rowKey)))) });
   };
-  const toggleRow = (key) => setSelection(selectedKeys.has(key) ? [...selectedKeys].filter((k) => k !== key) : [...selectedKeys, key]);
+  const single = selectable === 'single';
+  const toggleRow = (key) => setSelection(single ? [key] : selectedKeys.has(key) ? [...selectedKeys].filter((k) => k !== key) : [...selectedKeys, key]);
   const pageKeys = pageRows.map((row) => rowKeyOf(row, rowKey));
   const allOnPageSelected = pageKeys.length > 0 && pageKeys.every((key) => selectedKeys.has(key));
   const someOnPageSelected = pageKeys.some((key) => selectedKeys.has(key));
@@ -399,6 +470,8 @@ export const DataTable = ({
     column.cellClassName,
   ].filter(Boolean).join(' ') || undefined;
 
+  // the row last clicked (tables without selection, with onRowClick)
+  const [clickedKey, setClickedKey] = useState(null);
   // ---------------------------------------------------------------- colors / hover
   // Hovered cell { row, col }; only tracked when a hover look is set
   const trackHover = Boolean(hoverRow || hoverColumn || hoverCell);
@@ -411,7 +484,7 @@ export const DataTable = ({
     row._variant ? { variant: row._variant, style: {} } : null,
     lookFrom(row._look),
     ...ruleLooks(rowRules, row),
-    selectedKeys.has(key) ? lookFrom(selectedLook) : null,
+    selectedKeys.has(key) || (clickedKey !== null && clickedKey === key && !selectable) ? lookFrom(selectedLook) : null,
   ];
   const rowHoverLook = (key) => (hoverRow && hovered.row === key ? lookFrom(hoverRow) : null);
 
@@ -439,7 +512,11 @@ export const DataTable = ({
   const leadCols = selectable ? 1 : 0;
 
   const onRowClickHandler = (row, event) => {
-    if (!onRowClick || event.target.closest('input, select, textarea, button, a, label')) return;
+    if (event.target.closest('input, select, textarea, button, a, label')) return;
+    // a table without selection: the clicked row stays highlighted (highlightClicked: false turns it off)
+    if (!selectable && highlightClicked && onRowClick) setClickedKey(rowKeyOf(row, rowKey));
+    if (single) toggleRow(rowKeyOf(row, rowKey)); // one row at a time: clicking it picks it
+    if (!onRowClick) return;
     onRowClick({ row: stripRowIds([row])[0], rowKey: rowKeyOf(row, rowKey), nativeEvent: event });
   };
 
@@ -452,7 +529,7 @@ export const DataTable = ({
 
   // ---------------------------------------------------------------- toolbar
   const showToolbar = title || searchable || columnToggle || addable || exportable || (selectable && removable)
-    || toolbarActions?.length;
+    || toolbarActions?.length || canReset;
   const toolbar = showToolbar && (
     <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
       {title ? <h6 className="mb-0 me-auto">{title}</h6> : <div className="me-auto" />}
@@ -479,7 +556,12 @@ export const DataTable = ({
           {t('table.deleteSelected', { count: selectedKeys.size })}
         </Button>
       )}
-      {toolbarActions?.map((item, i) => actionButton(item, i, selectionContext, item.needsSelection && selectedKeys.size === 0))}
+      {toolbarButtons(toolbarActions, actions, selectionContext, { hasSelection: selectedKeys.size > 0 })}
+      {canReset && (
+        <Button size="sm" variant="outline-secondary" title={t('table.resetViewTitle')} onClick={resetView} disabled={busy}>
+          {t('table.resetView')}
+        </Button>
+      )}
       {exportable && (
         <Button size="sm" variant="outline-secondary"
           onClick={() => downloadCsv(exportFileName || `${tableName}.csv`, visible.filter((c) => !c.actions), stripRowIds(sorted))}>
@@ -505,8 +587,8 @@ export const DataTable = ({
           <tr key={level}>
             {level === 0 && selectable && (
               <th rowSpan={headerRows.length} style={{ width: 40 }} className={stickyHeader ? 'position-sticky top-0 bg-body' : undefined}>
-                <Form.Check type="checkbox" ref={selectAllRef} aria-label={t('table.selectAll')}
-                  checked={allOnPageSelected} onChange={toggleAllOnPage} />
+                {!single && <Form.Check type="checkbox" ref={selectAllRef} aria-label={t('table.selectAll')}
+                  checked={allOnPageSelected} onChange={toggleAllOnPage} />}
               </th>
             )}
             {cells.map(({ column, colSpan, rowSpan, group }) => {
@@ -551,7 +633,7 @@ export const DataTable = ({
               style={onRowClick ? { cursor: 'pointer' } : undefined} onClick={(e) => onRowClickHandler(row, e)}>
               {selectable && (
                 <td {...rowOnlyCellProps(row, key)} onMouseEnter={trackHover ? () => hoverAt(key, null) : undefined}>
-                  <Form.Check type="checkbox" aria-label={t('table.selectRow')} checked={selectedKeys.has(key)} onChange={() => toggleRow(key)} />
+                  <Form.Check type={single ? 'radio' : 'checkbox'} name={single ? `${nodeId}-pick` : undefined} aria-label={t('table.selectRow')} checked={selectedKeys.has(key)} onChange={() => toggleRow(key)} />
                 </td>
               )}
               {visible.map((column, c) => {
@@ -602,7 +684,7 @@ export const DataTable = ({
           <BsCard key={key} className={`mb-2 ${selectedKeys.has(key) ? 'border-primary' : ''}`} onClick={(e) => onRowClickHandler(row, e)}>
             <BsCard.Body className="p-2">
               {selectable && (
-                <Form.Check type="checkbox" className="mb-1" label={t('table.selectRow')} id={`${nodeId}-card-${key}`}
+                <Form.Check type={single ? 'radio' : 'checkbox'} name={single ? `${nodeId}-pick` : undefined} className="mb-1" label={t('table.selectRow')} id={`${nodeId}-card-${key}`}
                   checked={selectedKeys.has(key)} onChange={() => toggleRow(key)} />
               )}
               {visible.filter((column) => !column.hideInCards).map((column) => (
@@ -651,6 +733,7 @@ export const DataTable = ({
 
   return (
     <div data-rcube-table={nodeId} className={`mb-3 ${className}`.trim()} style={style}>
+      <style>{TABLE_CSS}</style>
       {toolbar}
       <div className="position-relative" aria-busy={busy || undefined}>
         <div className={stackAt ? `d-none d-${stackAt}-block` : undefined}

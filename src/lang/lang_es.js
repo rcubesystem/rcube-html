@@ -33,6 +33,8 @@ const messages = {
   },
 
   table: {
+    resetView: "Restablecer",
+    resetViewTitle: "Olvidar la página, el orden, la búsqueda y los filtros guardados",
     empty: "No se encontraron registros.",
     search: "Buscar...",
     columns: "Columnas",
@@ -179,6 +181,19 @@ const messages = {
     allEvents: "Todos los eventos",
     seriesNote: "Evento periódico: los cambios se aplican a todas las repeticiones; su horario no cambia.",
     repeat: { daily: "Se repite cada día", weekly: "Se repite cada semana", monthly: "Se repite cada mes", yearly: "Se repite cada año" },
+  },
+
+  richtext: {
+    bold: "Negrita", italic: "Cursiva", underline: "Subrayado", strike: "Tachado", heading: "Encabezado",
+    bulletList: "Lista con viñetas", numberList: "Lista numerada", quote: "Cita", link: "Enlace", unlink: "Quitar enlace",
+    clear: "Quitar formato", undo: "Deshacer", redo: "Rehacer",
+    source: "Código", formatted: "Con formato",
+    sourceTitle: "Editar el código HTML", formattedTitle: "Volver al texto con formato",
+    toolbar: "Formato de {label}",
+    sourceLabel: "{label} (código HTML)",
+    linkPrompt: "Dirección web (https://…)",
+    tooLong: "Como máximo {max} caracteres ({count} ahora).",
+    counter: "{count} / {max}",
   },
 
   common: {

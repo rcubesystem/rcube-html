@@ -6,6 +6,7 @@ import { Chart } from './chart';
 import { Calendar } from './calendar';
 import { FileUploadField } from './upload';
 import { Tree } from './tree';
+import { RichText, RichTextField } from './richtext';
 import { Container, Row, Col, Image } from "react-bootstrap";
 
 // 1. Define UI components to resolve inside the layout
@@ -56,6 +57,8 @@ const ComponentRegistry = {
   Chart,
   Calendar,
   Tree,
+  RichText,
+  RichTextField,
   InputField,
   TextareaField,
   SelectField,
@@ -70,6 +73,9 @@ const ComponentRegistry = {
 // Components built with forwardRef whose DOM node gets stored in fieldRefs (shared with form.js)
 const RefFields = FIELD_TYPES;
 
+// Fields that also get the form's actions (to run schema action names from their own options, e.g. RichTextField tools)
+const ActionFields = new Set(['RichTextField']);
+
 // Components that render nested schema nodes (node.children / node.items[].children / node.footer)
 // (DataTable, Chart, Calendar and Tree get the same props so they can reach the form's actions, errors and change tracking)
 const ContainerTypes = new Set([...Object.keys(BUILT_IN_CONTAINERS), 'DataTable', 'DynamicTable', 'Chart', 'Calendar', 'Tree']);
@@ -79,15 +85,17 @@ const ContainerTypes = new Set([...Object.keys(BUILT_IN_CONTAINERS), 'DataTable'
  *   registerComponent('Rating', RatingComponent);                       // display component
  *   registerComponent('RatingField', RatingField, { field: true });     // form field
  *   registerComponent('Panel', Panel, { container: true });             // renders nested nodes
+ *   registerComponent('NoteField', NoteField, { field: true, actions: true }); // a field that also gets `actions`
  * Field components must forwardRef to their input element (or a <fieldset> for groups) so the
  * form can read, set and validate their value; they receive name, error and onChange props.
  * Container components receive node, nodeId, items, renderNodes, actions and formContext
  * ({ errors, onFieldChange, values }) (see components.js);
  * render nested nodes with renderNodes(node.children) or renderNodes(item.children).
  */
-export const registerComponent = (name, component, { field = false, container = false } = {}) => {
+export const registerComponent = (name, component, { field = false, container = false, actions = false } = {}) => {
   ComponentRegistry[name] = component;
   if (field) FIELD_TYPES.add(name);
+  if (field && actions) ActionFields.add(name);
   if (container) ContainerTypes.add(name);
 };
 
@@ -180,6 +188,8 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
         name={fieldName}
         // SelectField reads other fields' values for dependent options ("optionsFrom")
         {...(componentName === 'SelectField' && { formValues: values })}
+        // Fields with their own schema actions (RichTextField tools / onLink) run them through the form
+        {...(ActionFields.has(componentName) && { actions: functionMap })}
         error={errors?.[fieldName]}
         onChange={(e) => {
           // Built-in tracking (visibleWhen, optionsFrom, error clearing) first, then the schema's onChange

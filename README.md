@@ -71,6 +71,8 @@ Every node has a unique `id`. Layout nodes have `children`; component nodes have
 | `RadioGroupField` | One choice from `options` | `inline` (default true) |
 | `CheckboxGroupField` | Any number of `options`; value is an array | `requiredOptions` |
 | `SliderField` | Range slider showing its value | `min`, `max`, `step`, `defaultValue`, `showValue`, `valueSuffix` |
+| `RichTextField` | Rich text editor; value is cleaned HTML | `toolbar`, `source`, `maxLength` — see [Rich text](#rich-text) |
+| `RichText` | Shows rich text safely | `html`, `emptyText` |
 | `ButtonField` | React-Bootstrap `Button` | `text`, `variant`, `size`, `onClick` |
 | `Text` | Any of h1–h6, p, span, small, strong, em, label, blockquote | `tag`, `text` |
 | `H1`…`H6`, `P`, `SPAN`, `SMALL`, `STRONG`, `EM`, `LABEL`, `BLOCKQUOTE` | Shortcuts for `Text` | `text` |
@@ -158,7 +160,7 @@ A schema-driven table (also registered as `DynamicTable`) with pagination, sorti
   ],
   rows: [ { id: 1, name: 'Ann', email: 'ann@x.com', region: 'East', status: 'Paid', amount: 120, qty: 2, ship: 'Air' } ],
   pageSize: 10, pageSizeOptions: [10, 25, 50],
-  sortable: false, searchable: true, selectable: true, removable: true, addable: true,
+  sortable: false, searchable: true, selectable: true, removable: true, addable: true,   // selectable: 'single' = a radio per row (one at a time; clicking a row picks it)
   exportable: true, columnToggle: true,
   stackBelow: 'md',          // card view below md
   responsive: true, stickyHeader: false, maxHeight: 400,
@@ -248,7 +250,9 @@ loadPage: async ({ page, pageSize, sort, query }) => {            // the table s
 },
 ```
 
-Clicking page 3 from page 1 asks for page 3 only. While a page is loading, the previous rows stay dimmed under a spinner and the pager, rows-per-page and sorting wait; if the call fails, call `setTableLoading(id, false)`. `onQueryChange` runs as a form action, so the payload is its first argument.
+**The chosen row** — selected, or in a table without selection the row last clicked (`onRowClick`; `highlightClicked: false` turns that off) — is highlighted: tinted, bold, with a bar at its start. Set the colours once for the app with `configureTableLook({ background, color, weight, accent })` (CSS values; or the `--rc-table-selected-bg`, `-color`, `-weight`, `-accent` CSS variables), or for one table with `selectedLook: { background, color }` / `{ variant: 'warning' }`.
+
+With `selectable: 'single'` each row has a radio button (one row at a time; clicking a row picks it) — handy with `toolbarActions` that act on the chosen row (`needsSelection: true`). Clicking page 3 from page 1 asks for page 3 only. While a page is loading, the previous rows stay dimmed under a spinner and the pager, rows-per-page and sorting wait; if the call fails, call `setTableLoading(id, false)`: the spinner ends and the pager goes back to the page shown. `onQueryChange` runs as a form action, so the payload is its first argument.
 
 **Action buttons** — like form buttons, `onClick` names an action (`"editOrder()"`), called as `fn(event, context)`:
 
@@ -353,6 +357,8 @@ A calendar with day, week, month, year and schedule (agenda) views: a sidebar wi
   dayStartHour: 0, dayEndHour: 24, scrollToHour: 8, hourHeight: 48,
   slotMinutes: 30, snapMinutes: 15, defaultDuration: 60,
   workingHours: { start: 9, end: 17, days: [1, 2, 3, 4, 5] },    // shades the rest
+  toolbar: true,                                                  // false: no header (today, ‹ ›, title, search, views)
+  toolbarActions: [ { text: 'New event', onClick: 'newEvent()' } ],   // your buttons -> { calendar, view, date }
   nowIndicator: true, agendaDays: 30, locale: 'en-US', hour12: true,
   calendars: [ { id: 'work', name: 'Work', color: '#2a78d6' }, { id: 'personal', name: 'Personal' } ],
   events: [                                                       // initial events (or [] and load them)
@@ -440,7 +446,9 @@ A tree with three views — `tree` (classic, optional lines / checkboxes), `expl
   searchable: true, searchMode: 'client',      // client (highlights, opens matching branches) | server (onSearch)
   filters: [ { id: 'pdf', label: 'PDF', when: { field: 'ext', equals: 'pdf' } } ], filterMode: 'any', remoteFilter: false,
   draggable: true, editable: true, autoUpdate: true,
-  contextMenu: [ { label: 'Rename', command: 'rename' }, { label: 'Copy link', action: 'copyLink()', when: { field: 'branch', equals: false } } ],
+  contextMenu: [ { text: 'Rename', command: 'rename' }, { text: 'Copy link', onClick: 'copyLink()', when: { field: 'branch', equals: false } } ],
+                                    // "text" / "onClick" like every button ("label" / "action" still work)
+  toolbarActions: [ { text: 'New folder', onClick: 'newFolder()', needsSelection: true } ],   // -> { tree, selected, checked, nodes }
   columns: [ { key: 'label', title: 'Name' }, { key: 'size', title: 'Size', format: 'bytes', width: '100px', align: 'end' } ],
   rootLabel: 'demo-bucket', title: 'Files', toolbar: true,
   onExpand: '...', onCollapse: '...', onSelect: '...', onActivate: '...', onNodeClick: '...', onNodeDoubleClick: '...',
@@ -539,6 +547,38 @@ actions: (api) => ({
 
 **Actions** (take the field's `name`): `getFiles(name)`, `uploadFiles(name)`, `clearFiles(name)`, `removeFile(name, fileId)`, `retryFile(name, fileId)`, `openFilePicker(name)`, `addFiles(name, files)`. `setFieldValue(name, [{ name, size, url }])` shows files that are already on the server; `clearForm` empties the field.
 
+## Rich text
+
+`RichTextField` is a form field: a formatting toolbar, an optional **Source** view to edit the HTML itself, paste cleaning, a character counter. Its value is cleaned HTML (paragraphs, line breaks, bold / italic / underline / strike, headings, lists, quotes, safe links), kept in a hidden `<textarea>`, so `required`, `setFieldValue`, `data`, `getFormEntries` and `runValidation` work as for any field. `required` and `maxLength` count the text, not the markup. Older plain-text values show as text with their line breaks.
+
+```js
+{ type: 'RichTextField', id: 'details', props: {
+  name: 'details', label: 'Details', required: true, hint: 'Shown under the editor', placeholder: 'Write here…',
+  maxLength: 4000, maxLengthMessage: '...', counter: true, minHeight: 140, maxHeight: 480, disabled: false, readOnly: false,
+  toolbar: ['bold', 'italic', 'underline', 'strike', '|', 'heading', 'bulletList', 'numberList', 'quote', '|', 'link', 'clear'],
+  //   built in: bold italic underline strike heading bulletList numberList quote link unlink clear undo redo
+  //   "|" = a gap; an array = a group; false = no toolbar; your own tools:
+  //     { key: 'sign', text: 'Signature', title: 'Add my signature', html: '<p>— Ann</p>' }   inserts the HTML
+  //     { key: 'improve', text: 'Improve', icon: '✨', onClick: 'improveText()' }           runs your action
+  source: true,                     // the Source button (false hides it); the HTML is cleaned going back
+  headingTag: 'h4',                 // what "heading" makes: h3 | h4 | h5
+  allowedTags: ['p', 'br', 'b', 'strong', 'i', 'em', 'u', 's', 'h3', 'h4', 'h5', 'ul', 'ol', 'li', 'blockquote', 'a', 'div'],
+  onLink: 'pickLink()',             // your action gives the web address (or a Promise of it); default: a prompt
+  onChange: '...', onFocus: '...', onBlur: '...',
+} }
+```
+
+Your tool's action (and `onLink`) gets `(event, { name, value, editor })`, where `editor` has `getHtml()`, `setHtml(html)`, `insertHtml(html)`, `insertText(text)` and `focus()`:
+
+```js
+actions: {
+  improveText: async (event, { editor }) => editor.setHtml(await improve(editor.getHtml())),
+  pickLink: async () => (await openLinkPicker())?.url,
+}
+```
+
+Show it with `{ type: 'RichText', id: 'd1', props: { html: saved.details, emptyText: 'Nothing yet' } }` (cleaned again). The cleaner is exported for your own use — `cleanHtml(html, { allowedTags })`, `htmlToText(html)`, `isHtml(value)`, `escapeHtml(text)` — clean again on the server before saving.
+
 ## Field props
 
 Live demo: [rcube-html.com/validation](https://rcube-html.com/validation)
@@ -547,6 +587,7 @@ Live demo: [rcube-html.com/validation](https://rcube-html.com/validation)
 |---|---|---|
 | `name` | all fields | Field key in values / errors / submitted entries (defaults to the node `id`) |
 | `label`, `placeholder` | all fields | Text; a red `*` is added to the label when `required` |
+| `hint` | all fields | Help text under the field (the error message takes its place while there is one) |
 | `required`, `requiredMessage` | all fields | Must have a value (checkbox: checked; checkbox group: at least one) |
 | `pattern`, `patternMessage` | text inputs | Regular expression the whole value must match |
 | `min`, `max`, `rangeMessage` | `type: "number"` | Numeric range |
@@ -608,6 +649,13 @@ const form = useDynamicTag({
 ```
 
 **Built-in actions** (usable from the schema by name): `runValidation`, `clearForm`, `resetForm`, `addCopy`, `removeCopy`, `switchLanguage` (reads the button's `data-lang`, e.g. `"data-lang": "es"`), `openModal` / `closeModal` (read `data-modal`), `selectTab` (reads `data-tabs` and `data-key`; works for Accordion too).
+
+### The same shape everywhere
+
+- **Options** are schema `props`; whatever changes at runtime (rows, events, nodes, view, selection) lives in the form's element state and changes through `form.actions` (`setRows`, `setCalendarEvents`, `setTreeNodes`, `setNodeProps`, …).
+- **Events** are `"onXxx": "actionName()"` props, run as `fn(payload, context)`.
+- **Your buttons** use one shape on every component — `{ key, text, icon, title, variant, className, onClick: 'action()', needsSelection, disabled }`: `toolbarActions` on DataTable, Calendar and Tree, a table column's `actions`, a Tree's `contextMenu` (plus `command`), RichTextField's own `toolbar` tools (plus `html`).
+- **Fields** all take `name`, `label`, `hint`, `required` / `requiredMessage`, `disabled`, `className`, `onChange` / `onFocus` / `onBlur`.
 
 ### `form.actions` methods
 
@@ -681,6 +729,7 @@ import { registerComponent } from 'rcube-html';
 registerComponent('Rating', RatingDisplay);                     // display component
 registerComponent('RatingField', RatingField, { field: true }); // form field
 registerComponent('Panel', Panel, { container: true });         // holds other nodes
+registerComponent('NoteField', NoteField, { field: true, actions: true }); // a field that also gets the form's `actions`
 ```
 
 Field components must `forwardRef` to their input element (or a `<fieldset>` for groups) and accept `name`, `error` and `onChange`.

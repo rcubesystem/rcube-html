@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { REVEAL_EVENT } from "./components";
+import { htmlToText } from "./richtextUtils";
 // Translation: each form supplies its translator via context (see i18n.js / useDynamicTag)
 import { defaultTranslator, translateProps, useTranslator } from "./i18n";
 import {
@@ -22,6 +23,9 @@ const LabelText = ({ label, required }) => (
     {required && <span className="text-danger ms-1" aria-hidden="true">*</span>}
   </>
 );
+
+// Help text under a field (schema "hint"); the error replaces it while there is one
+const FieldHint = ({ hint, error }) => (hint && !error ? <Form.Text className="d-block text-body-secondary">{hint}</Form.Text> : null);
 
 const countDigits = (s) => s.replace(/\D/g, '').length;
 
@@ -104,7 +108,7 @@ export const InputField = forwardRef(function InputField(
   // mask: schema format such as "(###) ###-####" applied while typing (# = digit)
   // beforeToday / maxYearsAgo (+ their messages): date range rules, also applied as the picker's min/max
   // numberMessage / rangeMessage / allowedValues / allowedValuesMessage: number rules (min / max stay on the input)
-  { label, type = 'text', className = '', id, name, error, value, onChange, required, requiredMessage, patternMessage, uppercase, lowercase, mask,
+  { label, hint, type = 'text', className = '', id, name, error, value, onChange, required, requiredMessage, patternMessage, uppercase, lowercase, mask,
     beforeToday, maxYearsAgo, beforeTodayMessage, maxYearsAgoMessage,
     numberMessage, rangeMessage, allowedValues, allowedValuesMessage, ...props },
   ref
@@ -153,6 +157,7 @@ export const InputField = forwardRef(function InputField(
         />
         {label && <Form.Check.Label className="text-body"><LabelText label={label} required={required} /></Form.Check.Label>}
         <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
+        <FieldHint hint={hint} error={error} />
       </Form.Check>
     );
   }
@@ -176,13 +181,14 @@ export const InputField = forwardRef(function InputField(
         {...props}
       />
       <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
+      <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
 });
 
 // <textarea> with Validation Display
 export const TextareaField = forwardRef(function TextareaField(
-  { label, className = '', id, name, error, value, onChange, required, requiredMessage, rows = 4, ...props },
+  { label, hint, className = '', id, name, error, value, onChange, required, requiredMessage, patternMessage, rows = 4, ...props },
   ref
 ) {
   return (
@@ -200,6 +206,7 @@ export const TextareaField = forwardRef(function TextareaField(
         {...props}
       />
       <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
+      <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
 });
@@ -212,7 +219,7 @@ export const TextareaField = forwardRef(function TextareaField(
  *   The list follows formValues[field]; changing that field resets this select.
  */
 export const SelectField = forwardRef(function SelectField(
-  { label, options = [], optionsFrom, formValues, placeholder: placeholderProp, className = '', id, name, error, value, onChange, required, requiredMessage, ...props },
+  { label, hint, options = [], optionsFrom, formValues, placeholder: placeholderProp, className = '', id, name, error, value, onChange, required, requiredMessage, ...props },
   ref
 ) {
   const t = useTranslator();
@@ -249,6 +256,7 @@ export const SelectField = forwardRef(function SelectField(
         ))}
       </Form.Select>
       <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
+      <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
 });
@@ -261,7 +269,7 @@ export const SelectField = forwardRef(function SelectField(
  */
 const ChoiceGroup = forwardRef(function ChoiceGroup(
   // requiredOptions / requiredOptionsMessage: options that must all be checked (validation-only, kept off the DOM)
-  { type, label, options = [], className = '', id, name, error, value, onChange, required, requiredMessage,
+  { type, label, hint, options = [], className = '', id, name, error, value, onChange, required, requiredMessage,
     requiredOptions = [], requiredOptionsMessage, inline = true, ...props },
   ref
 ) {
@@ -293,6 +301,7 @@ const ChoiceGroup = forwardRef(function ChoiceGroup(
         );
       })}
       <Form.Control.Feedback type="invalid" className={error ? 'd-block' : ''}>{error}</Form.Control.Feedback>
+      <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
 });
@@ -318,7 +327,7 @@ const FIELD_VALUE_SET_EVENT = 'rcube:valueset';
  * Value is a string like any input (e.g. "30").
  */
 export const SliderField = forwardRef(function SliderField(
-  { label, className = '', id, name, error, onChange, required, requiredMessage,
+  { label, hint, className = '', id, name, error, onChange, required, requiredMessage,
     min = 0, max = 100, step = 1, defaultValue, showValue = true, valueSuffix = '', ...props },
   ref
 ) {
@@ -361,6 +370,7 @@ export const SliderField = forwardRef(function SliderField(
         {...props}
       />
       <Form.Control.Feedback type="invalid" className={error ? 'd-block' : ''}>{error}</Form.Control.Feedback>
+      <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
 });
@@ -458,7 +468,7 @@ export const cloneSchema = (nodes = [], suffix) => nodes.map((node) => ({
 
 // Registry names of the components that are form fields (get refs, values and validation).
 // A Set so registerComponent(name, Component, { field: true }) can add custom field types.
-export const FIELD_TYPES = new Set(['InputField', 'TextareaField', 'SelectField', 'RadioGroupField', 'CheckboxGroupField', 'SliderField', 'FileUploadField', 'FileUpload']);
+export const FIELD_TYPES = new Set(['InputField', 'TextareaField', 'SelectField', 'RadioGroupField', 'CheckboxGroupField', 'SliderField', 'FileUploadField', 'FileUpload', 'RichTextField']);
 const fieldTypeOf = (node) => (node.type === 'component' ? node.componentName : node.type);
 
 // Value used for a field that isn't rendered (e.g. hidden by visibleWhen), so every entry has the same keys
@@ -597,6 +607,15 @@ export const validateField = (el, fieldProps = {}, t = defaultTranslator) => {
     const count = Array.isArray(value) ? value.length : 0;
     if (isRequired && !count) return fieldProps.requiredMessage || t('upload.required');
     if (fieldProps.minFiles && count < fieldProps.minFiles) return fieldProps.minFilesMessage || t('upload.tooFew', { min: fieldProps.minFiles });
+    return '';
+  }
+  // Rich text: "required" and "maxLength" count the text, not the markup
+  if (el.dataset?.rcubeRichtext !== undefined) {
+    const text = htmlToText(value || '');
+    if (isRequired && !text.trim()) return fieldProps.requiredMessage || t('validation.required');
+    if (fieldProps.maxLength && text.length > Number(fieldProps.maxLength)) {
+      return fieldProps.maxLengthMessage || t('richtext.tooLong', { max: fieldProps.maxLength, count: text.length });
+    }
     return '';
   }
   const isEmpty = Array.isArray(value) ? value.length === 0 : !value;

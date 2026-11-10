@@ -52,6 +52,9 @@ const messages = {
 
   // DataTable
   table: {
+    // a table that remembers its view (remember): forget the saved page, sort, search and filters
+    resetView: "Reset",
+    resetViewTitle: "Forget the saved page, sort, search and filters",
     empty: "No records found.",
     search: "Search...",
     columns: "Columns",
@@ -208,6 +211,22 @@ const messages = {
     allEvents: "All events",
     seriesNote: "Repeating event: changes apply to every occurrence; its schedule stays the same.",
     repeat: { daily: "Repeats daily", weekly: "Repeats weekly", monthly: "Repeats monthly", yearly: "Repeats yearly" },
+  },
+
+  richtext: {
+    // Toolbar buttons (titles / screen-reader labels)
+    bold: "Bold", italic: "Italic", underline: "Underline", strike: "Strike through", heading: "Heading",
+    bulletList: "Bulleted list", numberList: "Numbered list", quote: "Quote", link: "Link", unlink: "Remove link",
+    clear: "Clear formatting", undo: "Undo", redo: "Redo",
+    source: "Source", formatted: "Formatted",
+    sourceTitle: "Edit the HTML source", formattedTitle: "Back to the formatted text",
+    // {label} = the field's label
+    toolbar: "{label} formatting",
+    sourceLabel: "{label} (HTML source)",
+    linkPrompt: "Web address (https://…)",
+    // {max} = maxLength, {count} = the characters now
+    tooLong: "At most {max} characters ({count} now).",
+    counter: "{count} / {max}",
   },
 
   common: {

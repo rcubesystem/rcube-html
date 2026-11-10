@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonGroup, Form, Modal, Spinner } from "react-bootstrap";
 import { useTranslator } from "./i18n";
+import { toolbarButtons } from "./toolbar";
 import { CHART_COLORS } from "./chart";
 import {
   CALENDAR_VIEWS, addDays, addMinutes, dayKey, diffDays, expandEvents, minutesOfDay, normalizeEvent,
@@ -19,6 +20,8 @@ import {
  *     "events": [ { "id": 1, "title": "Standup", "start": "2026-11-02T09:00", "end": "2026-11-02T09:15", "calendar": "work",
  *                   "recurrence": { "freq": "weekly", "byDay": [1, 2, 3, 4, 5] } },
  *                 { "id": 2, "title": "Offsite", "start": "2026-11-05", "end": "2026-11-06", "allDay": true } ],
+ *     "toolbar": true,                       // false: no header (today / ‹ › / title / search / views)
+ *     "toolbarActions": [ { "text": "New event", "onClick": "newEvent()" } ],   // your buttons -> (event, { calendar, view, date })
  *     "sidebar": true, "searchable": true, "editable": true, "selectable": true, "eventEditor": true, "autoUpdate": true,
  *     "onRangeChange": "loadEvents()",       // on first render and whenever the visible range changes -> fetch events
  *     "onEventClick": "...", "onSlotClick": "...", "onSelect": "...",
@@ -223,7 +226,7 @@ export const Calendar = ({
   // sidebarOpen: true / false shows / hides the left panel; unset: shown on large screens (lg and up), hidden on small
   // ones. sidebarToggle: the hamburger button before "Today" that shows / hides it (onSidebarToggle({ open })).
   sidebarOpen: sidebarOpenProp, sidebarToggle = true,
-  keyboardShortcuts = true,
+  keyboardShortcuts = true, toolbar: showToolbar = true, toolbarActions,
   className = '', style,
   onRangeChange, onViewChange, onEventClick, onSlotClick, onSelect, onEventCreate, onEventUpdate, onEventDelete, onCalendarToggle, onSidebarToggle,
 }) => {
@@ -1037,6 +1040,7 @@ export const Calendar = ({
       <h2 className="rc-title" aria-live="polite">{title}</h2>
       {loading && <Spinner animation="border" size="sm" role="status"><span className="visually-hidden">{t('common.loading')}</span></Spinner>}
       <div className="ms-auto d-flex flex-wrap gap-2 align-items-center">
+        {toolbarButtons(toolbarActions, actions, () => ({ calendar: nodeId, name: nodeId, view, date: dayKey(date) }))}
         {searchable && (
           <Form.Control size="sm" type="search" placeholder={t('calendar.search')} aria-label={t('calendar.search')} style={{ width: 180 }}
             value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -1060,7 +1064,7 @@ export const Calendar = ({
       <style>{CAL_CSS}</style>
       {sidebarView}
       <div className="rc-main" style={{ height }}>
-        {toolbar}
+        {showToolbar && toolbar}
         <div className="rc-body" aria-busy={loading || undefined}>{body}</div>
       </div>
       {detailView}
