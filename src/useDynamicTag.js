@@ -4,11 +4,11 @@ import { createTranslator } from "./i18n";
 
 // Rows over each repeated entry: "Entry N" heading, plus a Remove button on added copies
 const buildCopyHeading = (copyId, index, t) => ({
-  "type": "row", "id": `copy-heading-${copyId}`, "props": { "className": "mt-4 pb-2 border-bottom align-items-center" },
+  "type": "row", "id": `copy-heading-${copyId}`, "props": { "className": "rc-mt-4 rc-pb-2 rc-border-bottom rc-align-items-center" },
   "children": [
     { "type": "column", "id": `copy-heading-col-${copyId}`,
-      "children": [{ "type": "H5", "id": `copy-heading-text-${copyId}`, "props": { "text": t('repeat.entry', { n: index + 1 }), "className": "mb-0" } }] },
-    ...(copyId === 1 ? [] : [{ "type": "column", "id": `copy-remove-col-${copyId}`, "props": { "className": "d-flex justify-content-end" },
+      "children": [{ "type": "H5", "id": `copy-heading-text-${copyId}`, "props": { "text": t('repeat.entry', { n: index + 1 }), "className": "rc-mb-0" } }] },
+    ...(copyId === 1 ? [] : [{ "type": "column", "id": `copy-remove-col-${copyId}`, "props": { "className": "rc-d-flex rc-justify-content-end" },
       "children": [{ "type": "ButtonField", "id": `copy-remove-${copyId}`, "props": {
         "text": "@repeat.remove", "variant": "outline-danger", "size": "sm",
         "data-copy-id": copyId, "onClick": "removeCopy()",

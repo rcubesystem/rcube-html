@@ -1,3 +1,4 @@
+import { copyFileSync } from "node:fs";
 import { defineConfig } from "tsup";
 
 export default defineConfig({
@@ -10,14 +11,18 @@ export default defineConfig({
   format: ["esm", "cjs"],
   outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".js" }),
   // Source files are .js with JSX
-  loader: { ".js": "jsx" },
+  // styles.css: bundled as text (added to the page when it isn't loaded) and copied to dist/styles.css
+  loader: { ".js": "jsx", ".css": "text" },
   esbuildOptions(options) {
     options.jsx = "automatic";
   },
   // Components use hooks / refs; Next.js App Router needs this directive at the top of the bundle
   banner: { js: '"use client";' },
-  // react, react-dom, react-bootstrap, bootstrap come from the consuming project (peerDependencies)
-  external: ["react", "react-dom", "react-bootstrap", "bootstrap"],
+  // react, react-dom come from the consuming project (peerDependencies); no Bootstrap needed
+  external: ["react", "react-dom"],
+  async onSuccess() {
+    copyFileSync("src/styles.css", "dist/styles.css");
+  },
   splitting: false,
   sourcemap: true,
   clean: true,

@@ -1,4 +1,15 @@
 // rcube-html public API
+import { ensureStyles } from "./styles";
+
+// The stylesheet: added once in the browser unless the page loaded "rcube-html/styles.css" itself
+if (typeof window !== "undefined") ensureStyles();
+
+export { ensureStyles, RCUBE_HTML_CSS } from "./styles";
+// rcube-html's own building blocks (no Bootstrap): for components registered with registerComponent
+export {
+  Button, ButtonGroup, CloseButton, Form, Spinner as UiSpinner, Badge as UiBadge, ProgressBar as UiProgressBar, Card as UiCard,
+  Table, Image, Pagination, Dropdown, Modal as UiModal, Overlay, Container, Row, Col, colClasses, gapClasses, cx,
+} from "./ui";
 export { useDynamicTag } from "./useDynamicTag";
 export { DynamicTag } from "./DynamicTag";
 export { LayoutParser, ComponentRegistry, registerComponent } from "./html";

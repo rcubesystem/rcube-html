@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, ButtonGroup, Form, Spinner } from "react-bootstrap";
+import { Button, ButtonGroup, Form, Spinner } from "./ui";
 import { useTranslator } from "./i18n";
 import { runAction } from "./form";
 import { toolbarButtons } from "./toolbar";
@@ -35,49 +35,49 @@ import {
 
 const TREE_CSS = `
 .rcube-tree{position:relative;font-size:.875rem}
-.rcube-tree .rt-pane{border:1px solid var(--bs-border-color);border-radius:8px;background:var(--bs-body-bg);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.rcube-tree .rt-pane{border:1px solid var(--rc-border-color);border-radius:8px;background:var(--rc-body-bg);overflow:hidden;display:flex;flex-direction:column;min-width:0}
 .rcube-tree .rt-scroll{overflow-y:auto;position:relative;outline:none;flex:1 1 auto}
-.rcube-tree .rt-scroll:focus-visible{box-shadow:inset 0 0 0 2px rgba(var(--bs-primary-rgb),.5)}
+.rcube-tree .rt-scroll:focus-visible{box-shadow:inset 0 0 0 2px rgba(var(--rc-primary-rgb),.5)}
 .rcube-tree .rt-row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:4px;padding-right:8px;cursor:default;user-select:none;white-space:nowrap}
-.rcube-tree .rt-row:hover{background:var(--bs-tertiary-bg)}
-.rcube-tree .rt-row.rt-sel{background:rgba(var(--bs-primary-rgb),.14)}
-.rcube-tree .rt-row.rt-focus{box-shadow:inset 0 0 0 1px rgba(var(--bs-primary-rgb),.6)}
+.rcube-tree .rt-row:hover{background:var(--rc-tertiary-bg)}
+.rcube-tree .rt-row.rt-sel{background:rgba(var(--rc-primary-rgb),.14)}
+.rcube-tree .rt-row.rt-focus{box-shadow:inset 0 0 0 1px rgba(var(--rc-primary-rgb),.6)}
 .rcube-tree .rt-row.rt-disabled{opacity:.5}
-.rcube-tree .rt-row.rt-drop-inside{background:rgba(var(--bs-primary-rgb),.22)}
-.rcube-tree .rt-row.rt-drop-before{box-shadow:inset 0 2px 0 var(--bs-primary)}
-.rcube-tree .rt-row.rt-drop-after{box-shadow:inset 0 -2px 0 var(--bs-primary)}
-.rcube-tree .rt-twisty{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:none;padding:0;color:var(--bs-secondary-color);border-radius:4px}
-.rcube-tree .rt-twisty:hover{background:var(--bs-secondary-bg)}
+.rcube-tree .rt-row.rt-drop-inside{background:rgba(var(--rc-primary-rgb),.22)}
+.rcube-tree .rt-row.rt-drop-before{box-shadow:inset 0 2px 0 var(--rc-primary)}
+.rcube-tree .rt-row.rt-drop-after{box-shadow:inset 0 -2px 0 var(--rc-primary)}
+.rcube-tree .rt-twisty{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;border:0;background:none;padding:0;color:var(--rc-secondary-color);border-radius:4px}
+.rcube-tree .rt-twisty:hover{background:var(--rc-secondary-bg)}
 .rcube-tree .rt-twisty svg{transition:transform .15s ease}
 .rcube-tree .rt-open>svg{transform:rotate(90deg)}
-.rcube-tree .rt-guide{position:absolute;top:0;bottom:0;border-left:1px solid var(--bs-border-color);pointer-events:none}
+.rcube-tree .rt-guide{position:absolute;top:0;bottom:0;border-left:1px solid var(--rc-border-color);pointer-events:none}
 .rcube-tree .rt-icon{width:18px;height:18px;flex:none;display:inline-flex;align-items:center;justify-content:center}
 .rcube-tree .rt-label{overflow:hidden;text-overflow:ellipsis;min-width:0}
-.rcube-tree .rt-sub{color:var(--bs-secondary-color);font-size:.75rem;overflow:hidden;text-overflow:ellipsis}
-.rcube-tree .rt-badge{margin-left:auto;font-size:.6875rem;color:var(--bs-secondary-color);background:var(--bs-secondary-bg);border-radius:999px;padding:0 6px;flex:none}
-.rcube-tree .rt-note{color:var(--bs-secondary-color);font-size:.8125rem;display:flex;align-items:center;gap:6px}
+.rcube-tree .rt-sub{color:var(--rc-secondary-color);font-size:.75rem;overflow:hidden;text-overflow:ellipsis}
+.rcube-tree .rt-badge{margin-left:auto;font-size:.6875rem;color:var(--rc-secondary-color);background:var(--rc-secondary-bg);border-radius:999px;padding:0 6px;flex:none}
+.rcube-tree .rt-note{color:var(--rc-secondary-color);font-size:.8125rem;display:flex;align-items:center;gap:6px}
 .rcube-tree mark.rt-mark{padding:0;background:rgba(237,161,0,.35);color:inherit;border-radius:2px}
-.rcube-tree .rt-chip{border:1px solid var(--bs-border-color);background:var(--bs-body-bg);border-radius:999px;padding:1px 10px;font-size:.8125rem;color:var(--bs-body-color)}
-.rcube-tree .rt-chip[aria-pressed=true]{background:rgba(var(--bs-primary-rgb),.14);border-color:var(--bs-primary);color:var(--bs-primary)}
-.rcube-tree .rt-head{display:grid;align-items:center;font-size:.75rem;font-weight:600;color:var(--bs-secondary-color);border-bottom:1px solid var(--bs-border-color);background:var(--bs-tertiary-bg)}
+.rcube-tree .rt-chip{border:1px solid var(--rc-border-color);background:var(--rc-body-bg);border-radius:999px;padding:1px 10px;font-size:.8125rem;color:var(--rc-body-color)}
+.rcube-tree .rt-chip[aria-pressed=true]{background:rgba(var(--rc-primary-rgb),.14);border-color:var(--rc-primary);color:var(--rc-primary)}
+.rcube-tree .rt-head{display:grid;align-items:center;font-size:.75rem;font-weight:600;color:var(--rc-secondary-color);border-bottom:1px solid var(--rc-border-color);background:var(--rc-tertiary-bg)}
 .rcube-tree .rt-head button{border:0;background:none;text-align:left;padding:6px 8px;color:inherit;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcube-tree .rt-grid-row{display:grid;align-items:center}
 .rcube-tree .rt-grid-row>div{padding:0 8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rcube-tree .rt-crumbs{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden}
-.rcube-tree .rt-crumbs button{border:0;background:none;padding:2px 6px;border-radius:4px;color:var(--bs-body-color);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
-.rcube-tree .rt-crumbs button:hover{background:var(--bs-secondary-bg)}
+.rcube-tree .rt-crumbs button{border:0;background:none;padding:2px 6px;border-radius:4px;color:var(--rc-body-color);white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.rcube-tree .rt-crumbs button:hover{background:var(--rc-secondary-bg)}
 .rcube-tree .rt-tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;padding:8px}
 .rcube-tree .rt-tile{border:1px solid transparent;border-radius:8px;padding:10px 6px;text-align:center;cursor:default;user-select:none}
-.rcube-tree .rt-tile:hover{background:var(--bs-tertiary-bg)}
-.rcube-tree .rt-tile.rt-sel{background:rgba(var(--bs-primary-rgb),.14);border-color:rgba(var(--bs-primary-rgb),.4)}
-.rcube-tree .rt-tile.rt-focus{border-color:var(--bs-primary)}
+.rcube-tree .rt-tile:hover{background:var(--rc-tertiary-bg)}
+.rcube-tree .rt-tile.rt-sel{background:rgba(var(--rc-primary-rgb),.14);border-color:rgba(var(--rc-primary-rgb),.4)}
+.rcube-tree .rt-tile.rt-focus{border-color:var(--rc-primary)}
 .rcube-tree .rt-tile .rt-label{display:block;font-size:.8125rem;margin-top:6px;word-break:break-word;white-space:normal;max-height:2.6em}
 .rcube-tree .rt-columns{display:flex;overflow-x:auto}
-.rcube-tree .rt-col{width:240px;flex:none;border-right:1px solid var(--bs-border-color);overflow-y:auto}
+.rcube-tree .rt-col{width:240px;flex:none;border-right:1px solid var(--rc-border-color);overflow-y:auto}
 .rcube-tree .rt-col .rt-row{position:relative}
-.rcube-tree .rt-menu{position:absolute;z-index:30;min-width:180px;background:var(--bs-body-bg);border:1px solid var(--bs-border-color);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
-.rcube-tree .rt-menu button{display:flex;gap:8px;width:100%;border:0;background:none;text-align:left;padding:6px 10px;border-radius:4px;color:var(--bs-body-color)}
-.rcube-tree .rt-menu button:hover,.rcube-tree .rt-menu button:focus{background:var(--bs-secondary-bg);outline:none}
+.rcube-tree .rt-menu{position:absolute;z-index:30;min-width:180px;background:var(--rc-body-bg);border:1px solid var(--rc-border-color);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:4px}
+.rcube-tree .rt-menu button{display:flex;gap:8px;width:100%;border:0;background:none;text-align:left;padding:6px 10px;border-radius:4px;color:var(--rc-body-color)}
+.rcube-tree .rt-menu button:hover,.rcube-tree .rt-menu button:focus{background:var(--rc-secondary-bg);outline:none}
 .rcube-tree .rt-menu hr{margin:4px 0}
 .rcube-tree .rt-rename{height:22px;font-size:.875rem;padding:0 4px;min-width:120px}
 `;
@@ -102,8 +102,8 @@ const FolderIcon = ({ open, size = 18 }) => (
 );
 const FileIcon = ({ color, size = 18 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="var(--bs-body-bg)" stroke="var(--bs-secondary-color)" strokeWidth="1.3" />
-    <path d="M14 3v5h5" fill="none" stroke="var(--bs-secondary-color)" strokeWidth="1.3" />
+    <path d="M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="var(--rc-body-bg)" stroke="var(--rc-secondary-color)" strokeWidth="1.3" />
+    <path d="M14 3v5h5" fill="none" stroke="var(--rc-secondary-color)" strokeWidth="1.3" />
     <rect x="7.5" y="13" width="9" height="4.5" rx="1" fill={color} />
   </svg>
 );
@@ -659,16 +659,16 @@ export const Tree = ({
     if (row.kind === 'empty') return <div key={key} className="rt-row rt-note" style={base}>{row.search ? t('tree.noMatches') : (row.node ? t('tree.emptyFolder') : (emptyText || t('tree.empty')))}</div>;
     if (row.kind === 'error') {
       return (
-        <div key={key} className="rt-row rt-note text-danger" style={base}>
+        <div key={key} className="rt-row rt-note rc-text-danger" style={base}>
           {row.message}
-          <Button size="sm" variant="link" className="p-0" onClick={() => (row.search ? runSearch(search.trim()) : retry(row.node))}>{t('tree.retry')}</Button>
+          <Button size="sm" variant="link" className="rc-p-0" onClick={() => (row.search ? runSearch(search.trim()) : retry(row.node))}>{t('tree.retry')}</Button>
         </div>
       );
     }
     // more
     return (
       <div key={key} className="rt-row rt-note" style={base}>
-        <Button size="sm" variant="link" className="p-0" onClick={() => (row.search ? runSearch(search.trim(), true) : load(row.node, true))}>
+        <Button size="sm" variant="link" className="rc-p-0" onClick={() => (row.search ? runSearch(search.trim(), true) : load(row.node, true))}>
           {t('tree.loadMore')}
         </Button>
       </div>
@@ -723,13 +723,13 @@ export const Tree = ({
           </button>
         ) : <span className="rt-twisty" aria-hidden="true" />}
         {checkboxes && (
-          <input type="checkbox" className="form-check-input m-0 me-1" tabIndex={-1} aria-hidden="true" disabled={node.disabled || node.checkable === false}
+          <input type="checkbox" className="rc-form-check-input rc-m-0 rc-me-1" tabIndex={-1} aria-hidden="true" disabled={node.disabled || node.checkable === false}
             checked={state === 1} ref={(el) => { if (el) el.indeterminate = state === 0.5; }} onChange={() => toggleCheck(node)} />
         )}
         {showIcons && iconFor(node, row.open)}
         {labelView(node)}
-        {row.result && <span className="rt-sub ms-2">{(findTreeNode(nodes, id)?.ancestors || []).map(labelOf).join(' / ') || node.path}</span>}
-        {node.description && <span className="rt-sub ms-2">{node.description}</span>}
+        {row.result && <span className="rt-sub rc-ms-2">{(findTreeNode(nodes, id)?.ancestors || []).map(labelOf).join(' / ') || node.path}</span>}
+        {node.description && <span className="rt-sub rc-ms-2">{node.description}</span>}
         {(node.badge !== undefined || (showCount && Array.isArray(node.children))) && (
           <span className="rt-badge">{node.badge ?? `${node.children.length}${node.hasMore ? '+' : ''}`}</span>
         )}
@@ -759,8 +759,8 @@ export const Tree = ({
   };
   const viewLabels = { tree: t('tree.views.tree'), explorer: t('tree.views.explorer'), columns: t('tree.views.columns') };
   const toolbarView = toolbar && (
-    <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
-      {title && <h6 className="mb-0 me-2">{title}</h6>}
+    <div className="rc-d-flex rc-flex-wrap rc-align-items-center rc-gap-2 rc-mb-2">
+      {title && <h6 className="rc-mb-0 rc-me-2">{title}</h6>}
       {searchable && (
         <Form.Control size="sm" type="search" style={{ maxWidth: 240 }} value={search} placeholder={searchPlaceholder || t('tree.search')}
           aria-label={searchPlaceholder || t('tree.search')} onChange={(e) => setProps({ search: e.target.value })} />
@@ -768,11 +768,11 @@ export const Tree = ({
       {filters.map((f) => (
         <button key={f.id} type="button" className="rt-chip" aria-pressed={activeFilters.includes(String(f.id))} onClick={() => toggleFilter(f.id)}>{f.label}</button>
       ))}
-      <div className="ms-auto d-flex flex-wrap gap-2 align-items-center">
+      <div className="rc-ms-auto rc-d-flex rc-flex-wrap rc-gap-2 rc-align-items-center">
         {toolbarButtons(toolbarActions, actions, () => ({ tree: nodeId, name: nodeId, selected: selectedIds, checked: checkedIds, nodes: selectedIds.map(nodeById).filter(Boolean) }),
           { hasSelection: selectedIds.length > 0 })}
-        {selectionMode === 'multiple' && selectedIds.length > 1 && <span className="small text-muted">{t('tree.selectedCount', { count: selectedIds.length })}</span>}
-        {checkboxes && checkedIds.length > 0 && <span className="small text-muted">{t('tree.checkedCount', { count: checkedIds.length })}</span>}
+        {selectionMode === 'multiple' && selectedIds.length > 1 && <span className="rc-small rc-text-muted">{t('tree.selectedCount', { count: selectedIds.length })}</span>}
+        {checkboxes && checkedIds.length > 0 && <span className="rc-small rc-text-muted">{t('tree.checkedCount', { count: checkedIds.length })}</span>}
         {view === 'tree' && (
           <>
             <Button size="sm" variant="outline-secondary" onClick={() => setProps({ expanded: allBranchIds() })}>{t('tree.expandAll')}</Button>
@@ -865,15 +865,15 @@ export const Tree = ({
     };
     const contentStatus = (
       <>
-        {(status === 'loading' || results?.loading) && <div className="rt-note p-2"><Spinner animation="border" size="sm" />{t('tree.loading')}</div>}
+        {(status === 'loading' || results?.loading) && <div className="rt-note rc-p-2"><Spinner animation="border" size="sm" />{t('tree.loading')}</div>}
         {status?.startsWith('error:') && (
-          <div className="rt-note p-2 text-danger">{status.slice(6)}<Button size="sm" variant="link" className="p-0" onClick={() => retry(folderNode)}>{t('tree.retry')}</Button></div>
+          <div className="rt-note rc-p-2 rc-text-danger">{status.slice(6)}<Button size="sm" variant="link" className="rc-p-0" onClick={() => retry(folderNode)}>{t('tree.retry')}</Button></div>
         )}
         {!status && !results?.loading && !shown.length && (
-          <div className="rt-note p-3 justify-content-center">{q || filterDefs.length ? t('tree.noMatches') : t('tree.emptyFolder')}</div>
+          <div className="rt-note rc-p-3 rc-justify-content-center">{q || filterDefs.length ? t('tree.noMatches') : t('tree.emptyFolder')}</div>
         )}
         {loadMore === 'button' && !paged && moreAvailable && !status && (
-          <div className="p-2 text-center"><Button size="sm" variant="outline-secondary" onClick={loadNext}>{t('tree.loadMore')}</Button></div>
+          <div className="rc-p-2 rc-text-center"><Button size="sm" variant="outline-secondary" onClick={loadNext}>{t('tree.loadMore')}</Button></div>
         )}
       </>
     );
@@ -939,20 +939,20 @@ export const Tree = ({
     const selectedInFolder = items.filter((n) => selectedSet.has(String(n.id)));
     const selectedBytes = selectedInFolder.reduce((s, n) => s + (Number(n.size) || 0), 0);
     body = (
-      <div className="d-flex gap-2" style={{ height }}>
-        <div className="rt-pane d-none d-md-flex" style={{ width: 260, flex: 'none' }}>
+      <div className="rc-d-flex rc-gap-2" style={{ height }}>
+        <div className="rt-pane rc-d-none rc-d-md-flex" style={{ width: 260, flex: 'none' }}>
           {treePane(treeRows, 'folders', height - 2)}
         </div>
-        <div className="rt-pane flex-grow-1">
-          <div className="d-flex align-items-center gap-1 px-2 border-bottom" style={{ height: 44 }}>
+        <div className="rt-pane rc-flex-grow-1">
+          <div className="rc-d-flex rc-align-items-center rc-gap-1 rc-px-2 rc-border-bottom" style={{ height: 44 }}>
             <button type="button" className="rt-twisty" style={{ width: 28, height: 28 }} disabled={!folderNode} aria-label={t('tree.up')} title={t('tree.up')}
               onClick={() => navigate(folderFound?.parent || null)}>↑</button>
             <button type="button" className="rt-twisty" style={{ width: 28, height: 28 }} aria-label={t('tree.refresh')} title={t('tree.refresh')}
               onClick={() => reload(folderNode)}>↻</button>
-            <nav className="rt-crumbs flex-grow-1" aria-label={t('tree.path')}>
+            <nav className="rt-crumbs rc-flex-grow-1" aria-label={t('tree.path')}>
               {crumbs.map((c, i) => (
-                <span key={c ? c.id : ROOT} className="d-flex align-items-center">
-                  {i > 0 && <span className="text-muted px-1">›</span>}
+                <span key={c ? c.id : ROOT} className="rc-d-flex rc-align-items-center">
+                  {i > 0 && <span className="rc-text-muted rc-px-1">›</span>}
                   <button type="button" aria-current={i === crumbs.length - 1 ? 'page' : undefined} onClick={() => navigate(c)}>{c ? labelOf(c) : (rootLabel || t('tree.root'))}</button>
                 </span>
               ))}
@@ -966,13 +966,13 @@ export const Tree = ({
           </div>
           {content}
           {paged && (
-            <div className="d-flex align-items-center justify-content-end gap-2 px-2 border-top" style={{ height: 40 }}>
+            <div className="rc-d-flex rc-align-items-center rc-justify-content-end rc-gap-2 rc-px-2 rc-border-top" style={{ height: 40 }}>
               <Button size="sm" variant="outline-secondary" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>‹</Button>
-              <span className="small">{t('tree.page', { page: currentPage, pages: `${pageCount}${moreAvailable ? '+' : ''}` })}</span>
+              <span className="rc-small">{t('tree.page', { page: currentPage, pages: `${pageCount}${moreAvailable ? '+' : ''}` })}</span>
               <Button size="sm" variant="outline-secondary" disabled={currentPage >= pageCount} onClick={() => setPage(currentPage + 1)}>›</Button>
             </div>
           )}
-          <div className="d-flex gap-3 px-2 border-top small text-muted align-items-center" style={{ height: 26 }}>
+          <div className="rc-d-flex rc-gap-3 rc-px-2 rc-border-top rc-small rc-text-muted rc-align-items-center" style={{ height: 26 }}>
             <span>{t('tree.itemCount', { count: items.length })}{moreAvailable ? '+' : ''}</span>
             {selectedInFolder.length > 0 && <span>{t('tree.selectedCount', { count: selectedInFolder.length })}{selectedBytes ? ` · ${formatBytes(selectedBytes, locale)}` : ''}</span>}
           </div>
@@ -1030,25 +1030,25 @@ export const Tree = ({
                       onContextMenu={(e) => { if (!contextMenu.length && !onContextMenu) return; e.preventDefault(); openMenu(n, e.clientX, e.clientY); }}>
                       {showIcons && iconFor(n, inPath)}
                       {labelView(n)}
-                      {isBranch(n) && <span className="ms-auto text-muted"><Chevron /></span>}
+                      {isBranch(n) && <span className="rc-ms-auto rc-text-muted"><Chevron /></span>}
                     </div>
                   );
                 })}
-                {status === 'loading' && <div className="rt-note p-2"><Spinner animation="border" size="sm" />{t('tree.loading')}</div>}
-                {status?.startsWith('error:') && <div className="rt-note p-2 text-danger">{status.slice(6)}<Button size="sm" variant="link" className="p-0" onClick={() => retry(col.parent)}>{t('tree.retry')}</Button></div>}
-                {!status && col.hasMore && <div className="p-2"><Button size="sm" variant="link" className="p-0" onClick={() => load(col.parent, true)}>{t('tree.loadMore')}</Button></div>}
-                {!status && !list.length && <div className="rt-note p-2">{q ? t('tree.noMatches') : t('tree.emptyFolder')}</div>}
+                {status === 'loading' && <div className="rt-note rc-p-2"><Spinner animation="border" size="sm" />{t('tree.loading')}</div>}
+                {status?.startsWith('error:') && <div className="rt-note rc-p-2 rc-text-danger">{status.slice(6)}<Button size="sm" variant="link" className="rc-p-0" onClick={() => retry(col.parent)}>{t('tree.retry')}</Button></div>}
+                {!status && col.hasMore && <div className="rc-p-2"><Button size="sm" variant="link" className="rc-p-0" onClick={() => load(col.parent, true)}>{t('tree.loadMore')}</Button></div>}
+                {!status && !list.length && <div className="rt-note rc-p-2">{q ? t('tree.noMatches') : t('tree.emptyFolder')}</div>}
               </div>
             );
           })}
           {lastNode && !isBranch(lastNode) && (
-            <div className="rt-col p-3 text-center" style={{ width: 280 }}>
-              <div className="my-3">{lastNode.thumbnail ? <img src={lastNode.thumbnail} alt="" style={{ maxWidth: '100%', borderRadius: 6 }} /> : iconFor(lastNode, false, 64)}</div>
-              <div className="fw-semibold text-break mb-2">{labelOf(lastNode)}</div>
+            <div className="rt-col rc-p-3 rc-text-center" style={{ width: 280 }}>
+              <div className="rc-my-3">{lastNode.thumbnail ? <img src={lastNode.thumbnail} alt="" style={{ maxWidth: '100%', borderRadius: 6 }} /> : iconFor(lastNode, false, 64)}</div>
+              <div className="rc-fw-semibold rc-text-break rc-mb-2">{labelOf(lastNode)}</div>
               {columns.filter((c) => c.key !== 'label').map((c) => cellText(lastNode, c) && (
-                <div key={c.key} className="d-flex justify-content-between small border-top py-1"><span className="text-muted">{columnTitle(c)}</span><span>{cellText(lastNode, c)}</span></div>
+                <div key={c.key} className="rc-d-flex rc-justify-content-between rc-small rc-border-top rc-py-1"><span className="rc-text-muted">{columnTitle(c)}</span><span>{cellText(lastNode, c)}</span></div>
               ))}
-              <Button size="sm" className="mt-3" onClick={() => activate(lastNode)}>{t('tree.open')}</Button>
+              <Button size="sm" className="rc-mt-3" onClick={() => activate(lastNode)}>{t('tree.open')}</Button>
             </div>
           )}
         </div>
@@ -1076,7 +1076,7 @@ export const Tree = ({
   );
 
   return (
-    <div ref={rootRef} data-rcube-tree={nodeId} className={`rcube-tree mb-3 ${className}`.trim()} style={style}>
+    <div ref={rootRef} data-rcube-tree={nodeId} className={`rcube-tree rc-mb-3 ${className}`.trim()} style={style}>
       <style>{TREE_CSS}</style>
       {toolbarView}
       {body}

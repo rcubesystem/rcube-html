@@ -1,4 +1,4 @@
-import { Button } from "react-bootstrap";
+import { Button } from "./ui";
 import { runAction } from "./form";
 
 /*
@@ -12,7 +12,7 @@ export const toolbarButtons = (items = [], actions, getContext, { hasSelection =
   <Button key={item.key ?? item.name ?? i} size="sm" variant={item.variant || 'outline-primary'} className={item.className}
     title={item.title} aria-label={item.title} disabled={item.disabled || (item.needsSelection && !hasSelection)}
     onClick={(event) => runAction(actions, item.onClick, event, getContext())}>
-    {item.icon && <span aria-hidden="true" className={item.text ? 'me-1' : undefined}>{item.icon}</span>}
+    {item.icon && <span aria-hidden="true" className={item.text ? 'rc-me-1' : undefined}>{item.icon}</span>}
     {item.text}
   </Button>
 ));

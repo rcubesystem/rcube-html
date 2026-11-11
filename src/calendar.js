@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, ButtonGroup, Form, Modal, Spinner } from "react-bootstrap";
+import { Button, ButtonGroup, Form, Modal, Spinner } from "./ui";
 import { useTranslator } from "./i18n";
 import { toolbarButtons } from "./toolbar";
 import { CHART_COLORS } from "./chart";
@@ -35,86 +35,86 @@ const CAL_CSS = `
 .rcube-cal{display:flex;gap:16px;font-size:.875rem;position:relative}
 .rcube-cal .rc-side{width:220px;flex:none}
 .rcube-cal .rc-menubtn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit}
-.rcube-cal .rc-menubtn:hover,.rcube-cal .rc-menubtn:focus-visible{background:var(--bs-secondary-bg,#e9ecef)}
+.rcube-cal .rc-menubtn:hover,.rcube-cal .rc-menubtn:focus-visible{background:var(--rc-secondary-bg,#e9ecef)}
 .rcube-cal .rc-menubtn svg{display:block}
-.rcube-cal .rc-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
-.rcube-cal .rc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--bs-border-color);border-radius:8px;overflow:hidden;background:var(--bs-body-bg);transition:opacity .15s}
-.rcube-cal.rc-loading .rc-body{opacity:.6}
-.rcube-cal .rc-title{font-size:1.25rem;font-weight:500;margin:0 8px 0 4px;white-space:nowrap}
-.rcube-cal .rc-wd-head{display:grid;border-bottom:1px solid var(--bs-border-color)}
-.rcube-cal .rc-wd-head div{text-align:center;font-size:.6875rem;font-weight:600;text-transform:uppercase;color:var(--bs-secondary-color);padding:6px 0}
+.rcube-cal .rc-cal-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.rcube-cal .rc-cal-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;border:1px solid var(--rc-border-color);border-radius:8px;overflow:hidden;background:var(--rc-body-bg);transition:opacity .15s}
+.rcube-cal.rc-cal-loading .rc-cal-body{opacity:.6}
+.rcube-cal .rc-cal-title{font-size:1.25rem;font-weight:500;margin:0 8px 0 4px;white-space:nowrap}
+.rcube-cal .rc-wd-head{display:grid;border-bottom:1px solid var(--rc-border-color)}
+.rcube-cal .rc-wd-head div{text-align:center;font-size:.6875rem;font-weight:600;text-transform:uppercase;color:var(--rc-secondary-color);padding:6px 0}
 .rcube-cal .rc-month{flex:1;display:flex;flex-direction:column;min-height:0}
-.rcube-cal .rc-week{position:relative;flex:1 1 0;min-height:0;border-bottom:1px solid var(--bs-border-color)}
+.rcube-cal .rc-week{position:relative;flex:1 1 0;min-height:0;border-bottom:1px solid var(--rc-border-color)}
 .rcube-cal .rc-month .rc-week:last-child{border-bottom:0}
 .rcube-cal .rc-week-bg{position:absolute;inset:0;display:grid}
-.rcube-cal .rc-cell{border-right:1px solid var(--bs-border-color);padding:2px 4px;text-align:center}
+.rcube-cal .rc-cell{border-right:1px solid var(--rc-border-color);padding:2px 4px;text-align:center}
 .rcube-cal .rc-cell:last-child{border-right:0}
-.rcube-cal .rc-cell.rc-out{background:var(--bs-tertiary-bg)}
-.rcube-cal .rc-out .rc-daynum{color:var(--bs-secondary-color)}
-.rcube-cal .rc-cell.rc-sel{background:rgba(var(--bs-primary-rgb),.14)}
-.rcube-cal .rc-daynum{border:0;background:none;border-radius:999px;min-width:24px;height:24px;font-size:.75rem;padding:0 6px;color:var(--bs-body-color)}
-.rcube-cal .rc-daynum:hover{background:var(--bs-secondary-bg)}
-.rcube-cal .rc-today>.rc-daynum{background:var(--bs-primary);color:#fff}
+.rcube-cal .rc-cell.rc-out{background:var(--rc-tertiary-bg)}
+.rcube-cal .rc-out .rc-daynum{color:var(--rc-secondary-color)}
+.rcube-cal .rc-cell.rc-sel{background:rgba(var(--rc-primary-rgb),.14)}
+.rcube-cal .rc-daynum{border:0;background:none;border-radius:999px;min-width:24px;height:24px;font-size:.75rem;padding:0 6px;color:var(--rc-body-color)}
+.rcube-cal .rc-daynum:hover{background:var(--rc-secondary-bg)}
+.rcube-cal .rc-today>.rc-daynum{background:var(--rc-primary);color:#fff}
 .rcube-cal .rc-week-events{position:absolute;inset:0;pointer-events:none}
 .rcube-cal .rc-ev{position:absolute;height:20px;line-height:20px;border-radius:4px;padding:0 6px;font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:auto;cursor:pointer;user-select:none}
-.rcube-cal .rc-ev-dot:hover{background:var(--bs-secondary-bg)}
+.rcube-cal .rc-ev-dot:hover{background:var(--rc-secondary-bg)}
 .rcube-cal .rc-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;flex:none}
-.rcube-cal .rc-ev .rc-time{color:var(--bs-secondary-color);margin-right:4px}
+.rcube-cal .rc-ev .rc-time{color:var(--rc-secondary-color);margin-right:4px}
 .rcube-cal .rc-ev-bar .rc-time{color:inherit;opacity:.85}
 .rcube-cal .rc-cont-l{border-top-left-radius:0;border-bottom-left-radius:0}
 .rcube-cal .rc-cont-r{border-top-right-radius:0;border-bottom-right-radius:0}
-.rcube-cal .rc-more{position:absolute;height:20px;line-height:20px;font-size:.75rem;font-weight:600;border:0;background:none;padding:0 6px;text-align:left;border-radius:4px;pointer-events:auto;color:var(--bs-body-color)}
-.rcube-cal .rc-more:hover{background:var(--bs-secondary-bg)}
+.rcube-cal .rc-more{position:absolute;height:20px;line-height:20px;font-size:.75rem;font-weight:600;border:0;background:none;padding:0 6px;text-align:left;border-radius:4px;pointer-events:auto;color:var(--rc-body-color)}
+.rcube-cal .rc-more:hover{background:var(--rc-secondary-bg)}
 .rcube-cal .rc-dragging .rc-ev,.rcube-cal .rc-dragging .rc-tev{pointer-events:none}
 .rcube-cal .rc-ghost{box-shadow:0 6px 16px rgba(0,0,0,.25);z-index:4}
-.rcube-cal .rc-tg-head,.rcube-cal .rc-allday{display:flex;border-bottom:1px solid var(--bs-border-color)}
+.rcube-cal .rc-tg-head,.rcube-cal .rc-allday{display:flex;border-bottom:1px solid var(--rc-border-color)}
 .rcube-cal .rc-gutter{width:56px;flex:none}
-.rcube-cal .rc-dayhead{flex:1 1 0;min-width:0;text-align:center;padding:6px 0;border:0;background:none;color:var(--bs-body-color)}
-.rcube-cal .rc-dayhead .rc-wd{font-size:.6875rem;font-weight:600;text-transform:uppercase;color:var(--bs-secondary-color)}
+.rcube-cal .rc-dayhead{flex:1 1 0;min-width:0;text-align:center;padding:6px 0;border:0;background:none;color:var(--rc-body-color)}
+.rcube-cal .rc-dayhead .rc-wd{font-size:.6875rem;font-weight:600;text-transform:uppercase;color:var(--rc-secondary-color)}
 .rcube-cal .rc-dayhead .rc-dn{font-size:1.25rem;line-height:36px;width:36px;height:36px;border-radius:50%;margin:0 auto}
-.rcube-cal .rc-dayhead:hover .rc-dn{background:var(--bs-secondary-bg)}
-.rcube-cal .rc-dayhead.rc-today .rc-wd{color:var(--bs-primary)}
-.rcube-cal .rc-dayhead.rc-today .rc-dn{background:var(--bs-primary);color:#fff}
-.rcube-cal .rc-allday-label{font-size:.6875rem;color:var(--bs-secondary-color);text-align:right;padding:4px 6px}
+.rcube-cal .rc-dayhead:hover .rc-dn{background:var(--rc-secondary-bg)}
+.rcube-cal .rc-dayhead.rc-today .rc-wd{color:var(--rc-primary)}
+.rcube-cal .rc-dayhead.rc-today .rc-dn{background:var(--rc-primary);color:#fff}
+.rcube-cal .rc-allday-label{font-size:.6875rem;color:var(--rc-secondary-color);text-align:right;padding:4px 6px}
 .rcube-cal .rc-allday .rc-week{border:0}
-.rcube-cal .rc-allday .rc-cell{border-right:0;border-left:1px solid var(--bs-border-color)}
+.rcube-cal .rc-allday .rc-cell{border-right:0;border-left:1px solid var(--rc-border-color)}
 .rcube-cal .rc-tg-scroll{flex:1 1 auto;overflow-y:auto;min-height:0}
 .rcube-cal .rc-tg{position:relative;display:flex}
 .rcube-cal .rc-hours{position:relative;width:56px;flex:none}
-.rcube-cal .rc-hours span{position:absolute;right:8px;font-size:.6875rem;color:var(--bs-secondary-color);transform:translateY(-50%);white-space:nowrap}
+.rcube-cal .rc-hours span{position:absolute;right:8px;font-size:.6875rem;color:var(--rc-secondary-color);transform:translateY(-50%);white-space:nowrap}
 .rcube-cal .rc-cols{position:relative;flex:1;display:flex;touch-action:none;min-width:0}
-.rcube-cal .rc-hline{position:absolute;left:0;right:0;border-top:1px solid var(--bs-border-color);pointer-events:none}
+.rcube-cal .rc-hline{position:absolute;left:0;right:0;border-top:1px solid var(--rc-border-color);pointer-events:none}
 .rcube-cal .rc-hline.rc-half{border-top-style:dotted;opacity:.6}
-.rcube-cal .rc-col{position:relative;flex:1 1 0;min-width:0;border-left:1px solid var(--bs-border-color)}
-.rcube-cal .rc-off{position:absolute;left:0;right:0;background:var(--bs-tertiary-bg);pointer-events:none}
-.rcube-cal .rc-tev{position:absolute;border-radius:4px;padding:1px 6px;font-size:.75rem;overflow:hidden;cursor:pointer;user-select:none;border:1px solid var(--bs-body-bg);line-height:1.3;z-index:1}
+.rcube-cal .rc-daycol{position:relative;flex:1 1 0;min-width:0;border-left:1px solid var(--rc-border-color)}
+.rcube-cal .rc-off{position:absolute;left:0;right:0;background:var(--rc-tertiary-bg);pointer-events:none}
+.rcube-cal .rc-tev{position:absolute;border-radius:4px;padding:1px 6px;font-size:.75rem;overflow:hidden;cursor:pointer;user-select:none;border:1px solid var(--rc-body-bg);line-height:1.3;z-index:1}
 .rcube-cal .rc-tev-title{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcube-cal .rc-tev-time{opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rcube-cal .rc-resize{position:absolute;left:0;right:0;bottom:0;height:6px;cursor:ns-resize}
 .rcube-cal .rc-now{position:absolute;left:0;right:0;border-top:2px solid #d03b3b;pointer-events:none;z-index:3}
 .rcube-cal .rc-now::before{content:'';position:absolute;left:-6px;top:-6px;width:10px;height:10px;border-radius:50%;background:#d03b3b}
-.rcube-cal .rc-selbox{position:absolute;left:2px;right:2px;background:rgba(var(--bs-primary-rgb),.18);border:1px solid var(--bs-primary);border-radius:4px;pointer-events:none;font-size:.75rem;padding:1px 6px;z-index:2}
-.rcube-cal .rc-pop{position:absolute;z-index:20;width:300px;max-width:calc(100% - 16px);background:var(--bs-body-bg);border:1px solid var(--bs-border-color);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:12px}
+.rcube-cal .rc-selbox{position:absolute;left:2px;right:2px;background:rgba(var(--rc-primary-rgb),.18);border:1px solid var(--rc-primary);border-radius:4px;pointer-events:none;font-size:.75rem;padding:1px 6px;z-index:2}
+.rcube-cal .rc-pop{position:absolute;z-index:20;width:300px;max-width:calc(100% - 16px);background:var(--rc-body-bg);border:1px solid var(--rc-border-color);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:12px}
 .rcube-cal .rc-swatch{width:14px;height:14px;border-radius:4px;flex:none;margin-top:4px}
 .rcube-cal .rc-agenda{overflow-y:auto;flex:1}
-.rcube-cal .rc-ag-day{display:flex;gap:12px;padding:8px 12px;border-bottom:1px solid var(--bs-border-color)}
+.rcube-cal .rc-ag-day{display:flex;gap:12px;padding:8px 12px;border-bottom:1px solid var(--rc-border-color)}
 .rcube-cal .rc-ag-date{width:110px;flex:none;display:flex;gap:8px;align-items:baseline}
 .rcube-cal .rc-ag-date .rc-dn{font-size:1.25rem;width:32px;height:32px;line-height:32px;text-align:center;border-radius:50%}
-.rcube-cal .rc-ag-date.rc-today .rc-dn{background:var(--bs-primary);color:#fff}
+.rcube-cal .rc-ag-date.rc-today .rc-dn{background:var(--rc-primary);color:#fff}
 .rcube-cal .rc-ag-item{display:flex;gap:10px;align-items:center;padding:4px 6px;border-radius:4px;cursor:pointer}
-.rcube-cal .rc-ag-item:hover{background:var(--bs-secondary-bg)}
+.rcube-cal .rc-ag-item:hover{background:var(--rc-secondary-bg)}
 .rcube-cal .rc-mini{font-size:.75rem;user-select:none}
 .rcube-cal .rc-mini-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;justify-items:center}
-.rcube-cal .rc-mini-grid>span{color:var(--bs-secondary-color);font-size:.6875rem;line-height:24px}
-.rcube-cal .rc-mini-grid button{border:0;background:none;width:26px;height:26px;border-radius:50%;font-size:.75rem;padding:0;color:var(--bs-body-color);position:relative}
-.rcube-cal .rc-mini-grid button:hover{background:var(--bs-secondary-bg)}
-.rcube-cal .rc-mini-grid .rc-out{color:var(--bs-secondary-color)}
-.rcube-cal .rc-mini-grid .rc-pick{background:rgba(var(--bs-primary-rgb),.18)}
-.rcube-cal .rc-mini-grid .rc-today{background:var(--bs-primary);color:#fff}
-.rcube-cal .rc-mini-grid .rc-mark::after{content:'';position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--bs-primary)}
+.rcube-cal .rc-mini-grid>span{color:var(--rc-secondary-color);font-size:.6875rem;line-height:24px}
+.rcube-cal .rc-mini-grid button{border:0;background:none;width:26px;height:26px;border-radius:50%;font-size:.75rem;padding:0;color:var(--rc-body-color);position:relative}
+.rcube-cal .rc-mini-grid button:hover{background:var(--rc-secondary-bg)}
+.rcube-cal .rc-mini-grid .rc-out{color:var(--rc-secondary-color)}
+.rcube-cal .rc-mini-grid .rc-pick{background:rgba(var(--rc-primary-rgb),.18)}
+.rcube-cal .rc-mini-grid .rc-today{background:var(--rc-primary);color:#fff}
+.rcube-cal .rc-mini-grid .rc-mark::after{content:'';position:absolute;bottom:1px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--rc-primary)}
 .rcube-cal .rc-year{overflow-y:auto;flex:1;padding:12px}
-.rcube-cal .rc-iconbtn{border:0;background:none;border-radius:50%;width:32px;height:32px;color:var(--bs-body-color);font-size:1.1rem;line-height:1}
-.rcube-cal .rc-iconbtn:hover{background:var(--bs-secondary-bg)}
+.rcube-cal .rc-iconbtn{border:0;background:none;border-radius:50%;width:32px;height:32px;color:var(--rc-body-color);font-size:1.1rem;line-height:1}
+.rcube-cal .rc-iconbtn:hover{background:var(--rc-secondary-bg)}
 `;
 
 const LANE = 22; // month / all-day event row height
@@ -188,8 +188,8 @@ const MiniMonth = ({ month, selected, today, firstDay, onPick, onNav, marks, fmt
   const days = Array.from({ length: 42 }, (_, i) => addDays(start, i));
   return (
     <div className="rc-mini">
-      <div className="d-flex align-items-center mb-1">
-        <span className="fw-semibold flex-grow-1 ps-1">{fmt.monthYear.format(month)}</span>
+      <div className="rc-d-flex rc-align-items-center rc-mb-1">
+        <span className="rc-fw-semibold rc-flex-grow-1 rc-ps-1">{fmt.monthYear.format(month)}</span>
         {onNav && (
           <>
             <button type="button" className="rc-iconbtn" style={{ width: 26, height: 26, fontSize: '.9rem' }} aria-label={t('calendar.previous')} onClick={() => onNav(-1)}>‹</button>
@@ -345,7 +345,7 @@ export const Calendar = ({
   useEffect(() => {
     if (!detail && !moreDay) return undefined;
     const close = (e) => {
-      if (e.target.closest?.('.rc-pop, .modal')) return;
+      if (e.target.closest?.('.rc-pop, .rc-modal')) return;
       setDetail(null);
       setMoreDay(null);
     };
@@ -733,7 +733,7 @@ export const Calendar = ({
                   }
                 }
                 return (
-                  <div key={dayKey(d)} className="rc-col">
+                  <div key={dayKey(d)} className="rc-daycol">
                     {off.map(([a, b]) => <div key={a} className="rc-off" style={{ top: minuteToY(a), height: minuteToY(b) - minuteToY(a) }} />)}
                     {items.map(({ ev, s, e, col, cols, cutTop, cutBottom }) => {
                       const color = colorOf(ev);
@@ -749,7 +749,7 @@ export const Calendar = ({
                             ...(cutTop && { borderTopLeftRadius: 0, borderTopRightRadius: 0 }),
                             ...(cutBottom && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }),
                           }}>
-                          <div className="rc-tev-title">{ev.title || t('calendar.noTitle')}{h < 34 && <span className="fw-normal">{`, ${timeLabel(ev._start)}`}</span>}</div>
+                          <div className="rc-tev-title">{ev.title || t('calendar.noTitle')}{h < 34 && <span className="rc-fw-normal">{`, ${timeLabel(ev._start)}`}</span>}</div>
                           {h >= 34 && <div className="rc-tev-time">{`${timeLabel(ev._start)} – ${timeLabel(ev._end)}`}</div>}
                           {h >= 52 && ev.location && <div className="rc-tev-time">{ev.location}</div>}
                           {canEdit(ev) && !cutBottom && <div className="rc-resize" data-resize />}
@@ -780,25 +780,25 @@ export const Calendar = ({
       .filter((day) => day.items.length);
     body = (
       <div className="rc-agenda">
-        {days.length === 0 && <div className="text-center text-muted py-5">{t('calendar.noEvents')}</div>}
+        {days.length === 0 && <div className="rc-text-center rc-text-muted rc-py-5">{t('calendar.noEvents')}</div>}
         {days.map(({ d, items }) => (
           <div key={dayKey(d)} className="rc-ag-day">
             <div className={`rc-ag-date ${sameDay(d, today) ? 'rc-today' : ''}`}>
-              <button type="button" className="rc-dn border-0 p-0" data-goto onClick={() => openDay(d)}
-                style={sameDay(d, today) ? { background: 'var(--bs-primary)', color: '#fff' } : { background: 'none', color: 'var(--bs-body-color)' }}>{d.getDate()}</button>
-              <span className="small text-uppercase" style={{ color: 'var(--bs-secondary-color)' }}>{`${fmt.monthShortDay.format(d).replace(/\d+/, '').trim()}, ${fmt.weekdayShort.format(d)}`}</span>
+              <button type="button" className="rc-dn rc-border-0 rc-p-0" data-goto onClick={() => openDay(d)}
+                style={sameDay(d, today) ? { background: 'var(--rc-primary)', color: '#fff' } : { background: 'none', color: 'var(--rc-body-color)' }}>{d.getDate()}</button>
+              <span className="rc-small rc-text-uppercase" style={{ color: 'var(--rc-secondary-color)' }}>{`${fmt.monthShortDay.format(d).replace(/\d+/, '').trim()}, ${fmt.weekdayShort.format(d)}`}</span>
             </div>
-            <div className="flex-grow-1" style={{ minWidth: 0 }}>
+            <div className="rc-flex-grow-1" style={{ minWidth: 0 }}>
               {items.map((ev) => (
                 <div key={ev.id} className="rc-ag-item" role="button" tabIndex={0} onKeyDown={eventKeyDown(ev)}
                   onClick={(e) => showDetail(ev, e.clientX, e.clientY)}>
                   <span className="rc-dot" style={{ background: colorOf(ev) }} />
-                  <span style={{ width: 150, flex: 'none', color: 'var(--bs-secondary-color)' }}>
+                  <span style={{ width: 150, flex: 'none', color: 'var(--rc-secondary-color)' }}>
                     {ev.allDay ? t('calendar.allDay') : `${timeLabel(ev._start)} – ${timeLabel(ev._end)}`}
                   </span>
-                  <span className="text-truncate">
-                    <span className="fw-semibold">{ev.title || t('calendar.noTitle')}</span>
-                    {ev.location && <span style={{ color: 'var(--bs-secondary-color)' }}>{` · ${ev.location}`}</span>}
+                  <span className="rc-text-truncate">
+                    <span className="rc-fw-semibold">{ev.title || t('calendar.noTitle')}</span>
+                    {ev.location && <span style={{ color: 'var(--rc-secondary-color)' }}>{` · ${ev.location}`}</span>}
                   </span>
                 </div>
               ))}
@@ -816,9 +816,9 @@ export const Calendar = ({
     });
     body = (
       <div className="rc-year">
-        <div className="row g-4">
+        <div className="rc-row rc-g-4">
           {Array.from({ length: 12 }, (_, m) => (
-            <div key={m} className="col-12 col-sm-6 col-lg-4 col-xl-3">
+            <div key={m} className="rc-col-12 rc-col-sm-6 rc-col-lg-4 rc-col-xl-3">
               <MiniMonth month={new Date(date.getFullYear(), m, 1)} today={today} firstDay={firstDay} fmt={fmt} t={t}
                 marks={marks} onPick={openDay} />
             </div>
@@ -837,7 +837,7 @@ export const Calendar = ({
     setProps({ sidebarOpen: !shown });
     onSidebarToggle?.({ calendar: nodeId, open: !shown });
   };
-  const sideClass = sidebarOpen === true ? 'rc-side d-block' : sidebarOpen === false ? 'rc-side d-none' : 'rc-side d-none d-lg-block';
+  const sideClass = sidebarOpen === true ? 'rc-side rc-d-block' : sidebarOpen === false ? 'rc-side rc-d-none' : 'rc-side rc-d-none rc-d-lg-block';
   const title = view === 'day' ? fmt.full.format(date)
     : view === 'week' ? rangeText(range.start, addDays(range.end, -1))
       : view === 'month' ? fmt.monthYear.format(date)
@@ -875,7 +875,7 @@ export const Calendar = ({
     const cal = calMap[String(ev.calendar)];
     return (
       <div className="rc-pop" style={popStyle(detail)} role="dialog" aria-label={ev.title || t('calendar.noTitle')}>
-        <div className="d-flex justify-content-end gap-1 mb-1">
+        <div className="rc-d-flex rc-justify-content-end rc-gap-1 rc-mb-1">
           {editable && eventEditor && ev.editable !== false && (
             <button type="button" className="rc-iconbtn" title={t('calendar.edit')} aria-label={t('calendar.edit')} onClick={() => openEdit(ev)}>✎</button>
           )}
@@ -885,21 +885,21 @@ export const Calendar = ({
           )}
           <button type="button" className="rc-iconbtn" aria-label={t('common.close')} onClick={() => setDetail(null)}>×</button>
         </div>
-        <div className="d-flex gap-2">
+        <div className="rc-d-flex rc-gap-2">
           <span className="rc-swatch" style={{ background: colorOf(ev) }} />
           <div style={{ minWidth: 0 }}>
-            <div className="fw-semibold fs-6 text-break">{ev.title || t('calendar.noTitle')}</div>
-            <div className="small" style={{ color: 'var(--bs-secondary-color)' }}>{whenText(ev)}</div>
-            {ev.recurrence && <div className="small" style={{ color: 'var(--bs-secondary-color)' }}>{t(`calendar.repeat.${ev.recurrence.freq || 'weekly'}`)}</div>}
-            {ev.location && <div className="small mt-2">📍 {ev.location}</div>}
-            {ev.description && <div className="small mt-2" style={{ whiteSpace: 'pre-wrap' }}>{ev.description}</div>}
-            {cal && <div className="small mt-2 d-flex align-items-center"><span className="rc-dot" style={{ background: cal.color }} />{cal.name ?? cal.id}</div>}
+            <div className="rc-fw-semibold rc-fs-6 rc-text-break">{ev.title || t('calendar.noTitle')}</div>
+            <div className="rc-small" style={{ color: 'var(--rc-secondary-color)' }}>{whenText(ev)}</div>
+            {ev.recurrence && <div className="rc-small" style={{ color: 'var(--rc-secondary-color)' }}>{t(`calendar.repeat.${ev.recurrence.freq || 'weekly'}`)}</div>}
+            {ev.location && <div className="rc-small rc-mt-2">📍 {ev.location}</div>}
+            {ev.description && <div className="rc-small rc-mt-2" style={{ whiteSpace: 'pre-wrap' }}>{ev.description}</div>}
+            {cal && <div className="rc-small rc-mt-2 rc-d-flex rc-align-items-center"><span className="rc-dot" style={{ background: cal.color }} />{cal.name ?? cal.id}</div>}
           </div>
         </div>
         {detail.confirmDelete && (
-          <div className="border-top mt-3 pt-2">
-            <div className="small fw-semibold mb-2">{t('calendar.deleteRecurring')}</div>
-            <div className="d-flex flex-wrap gap-2">
+          <div className="rc-border-top rc-mt-3 rc-pt-2">
+            <div className="rc-small rc-fw-semibold rc-mb-2">{t('calendar.deleteRecurring')}</div>
+            <div className="rc-d-flex rc-flex-wrap rc-gap-2">
               <Button size="sm" variant="outline-danger" onClick={() => deleteEvent(ev, 'one')}>{t('calendar.thisEvent')}</Button>
               <Button size="sm" variant="danger" onClick={() => deleteEvent(ev, 'all')}>{t('calendar.allEvents')}</Button>
             </div>
@@ -911,8 +911,8 @@ export const Calendar = ({
 
   const moreView = moreDay && (
     <div className="rc-pop" style={popStyle(moreDay)} role="dialog" aria-label={fmt.full.format(moreDay.day)}>
-      <div className="d-flex align-items-center mb-2">
-        <button type="button" className="btn btn-link p-0 text-decoration-none fw-semibold flex-grow-1 text-start" onClick={() => openDay(moreDay.day)}>
+      <div className="rc-d-flex rc-align-items-center rc-mb-2">
+        <button type="button" className="rc-btn rc-btn-link rc-p-0 rc-text-decoration-none rc-fw-semibold rc-flex-grow-1 rc-text-start" onClick={() => openDay(moreDay.day)}>
           {fmt.dayLong.format(moreDay.day)}
         </button>
         <button type="button" className="rc-iconbtn" aria-label={t('common.close')} onClick={() => setMoreDay(null)}>×</button>
@@ -922,11 +922,11 @@ export const Calendar = ({
         .map((ev) => {
           const color = colorOf(ev);
           return (
-            <div key={ev.id} role="button" tabIndex={0} className="rounded px-2 mb-1 small text-truncate"
+            <div key={ev.id} role="button" tabIndex={0} className="rc-rounded rc-px-2 rc-mb-1 rc-small rc-text-truncate"
               style={ev.allDay ? { background: color, color: inkOn(color), cursor: 'pointer' } : { cursor: 'pointer' }}
               onKeyDown={eventKeyDown(ev)} onClick={(e) => showDetail(ev, e.clientX, e.clientY)}>
               {!ev.allDay && <span className="rc-dot" style={{ background: color }} />}
-              {!ev.allDay && <span className="me-1" style={{ color: 'var(--bs-secondary-color)' }}>{timeLabel(ev._start)}</span>}
+              {!ev.allDay && <span className="rc-me-1" style={{ color: 'var(--rc-secondary-color)' }}>{timeLabel(ev._start)}</span>}
               {ev.title || t('calendar.noTitle')}
             </div>
           );
@@ -942,51 +942,51 @@ export const Calendar = ({
           <Modal.Title as="h6">{editor.mode === 'create' ? t('calendar.newEvent') : t('calendar.editEvent')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form.Control autoFocus size="lg" className="mb-3" placeholder={t('calendar.titlePlaceholder')} aria-label={t('calendar.title')}
+          <Form.Control autoFocus size="lg" className="rc-mb-3" placeholder={t('calendar.titlePlaceholder')} aria-label={t('calendar.title')}
             value={editor.draft.title} onChange={(e) => setDraft({ title: e.target.value })} />
-          <Form.Check type="switch" id={`${nodeId}-allday`} className="mb-2" label={t('calendar.allDay')} disabled={editor.recurring}
+          <Form.Check type="switch" id={`${nodeId}-allday`} className="rc-mb-2" label={t('calendar.allDay')} disabled={editor.recurring}
             checked={editor.draft.allDay} onChange={(e) => setDraft({ allDay: e.target.checked })} />
-          <div className="row g-2 mb-3">
-            <div className="col-6">
-              <Form.Label className="small mb-1">{t('calendar.start')}</Form.Label>
+          <div className="rc-row rc-g-2 rc-mb-3">
+            <div className="rc-col-6">
+              <Form.Label className="rc-small rc-mb-1">{t('calendar.start')}</Form.Label>
               <Form.Control type="date" size="sm" disabled={editor.recurring} value={editor.draft.startDate}
                 onChange={(e) => setDraft({ startDate: e.target.value, ...(e.target.value > editor.draft.endDate && { endDate: e.target.value }) })} />
               {!editor.draft.allDay && (
-                <Form.Control type="time" size="sm" className="mt-1" disabled={editor.recurring} aria-label={t('calendar.startTime')}
+                <Form.Control type="time" size="sm" className="rc-mt-1" disabled={editor.recurring} aria-label={t('calendar.startTime')}
                   value={editor.draft.startTime} onChange={(e) => setDraft({ startTime: e.target.value })} />
               )}
             </div>
-            <div className="col-6">
-              <Form.Label className="small mb-1">{t('calendar.end')}</Form.Label>
+            <div className="rc-col-6">
+              <Form.Label className="rc-small rc-mb-1">{t('calendar.end')}</Form.Label>
               <Form.Control type="date" size="sm" disabled={editor.recurring} value={editor.draft.endDate}
                 onChange={(e) => setDraft({ endDate: e.target.value })} />
               {!editor.draft.allDay && (
-                <Form.Control type="time" size="sm" className="mt-1" disabled={editor.recurring} aria-label={t('calendar.endTime')}
+                <Form.Control type="time" size="sm" className="rc-mt-1" disabled={editor.recurring} aria-label={t('calendar.endTime')}
                   value={editor.draft.endTime} onChange={(e) => setDraft({ endTime: e.target.value })} />
               )}
             </div>
           </div>
-          {editor.recurring && <div className="small text-muted mb-2">{t('calendar.seriesNote')}</div>}
+          {editor.recurring && <div className="rc-small rc-text-muted rc-mb-2">{t('calendar.seriesNote')}</div>}
           {calendars.length > 0 && (
-            <Form.Group className="mb-2">
-              <Form.Label className="small mb-1">{t('calendar.calendar')}</Form.Label>
+            <Form.Group className="rc-mb-2">
+              <Form.Label className="rc-small rc-mb-1">{t('calendar.calendar')}</Form.Label>
               <Form.Select size="sm" value={editor.draft.calendar} onChange={(e) => setDraft({ calendar: e.target.value })}>
                 {calendars.map((c) => <option key={c.id} value={c.id}>{c.name ?? c.id}</option>)}
               </Form.Select>
             </Form.Group>
           )}
-          <Form.Group className="mb-2">
-            <Form.Label className="small mb-1">{t('calendar.location')}</Form.Label>
+          <Form.Group className="rc-mb-2">
+            <Form.Label className="rc-small rc-mb-1">{t('calendar.location')}</Form.Label>
             <Form.Control size="sm" value={editor.draft.location} onChange={(e) => setDraft({ location: e.target.value })} />
           </Form.Group>
           <Form.Group>
-            <Form.Label className="small mb-1">{t('calendar.description')}</Form.Label>
+            <Form.Label className="rc-small rc-mb-1">{t('calendar.description')}</Form.Label>
             <Form.Control as="textarea" rows={3} size="sm" value={editor.draft.description} onChange={(e) => setDraft({ description: e.target.value })} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           {editor.mode === 'edit' && (
-            <Button variant="outline-danger" className="me-auto" onClick={() => deleteEvent(byId(editor.id) || normalized.find((ev) => ev.id === editor.id))}>
+            <Button variant="outline-danger" className="rc-me-auto" onClick={() => deleteEvent(byId(editor.id) || normalized.find((ev) => ev.id === editor.id))}>
               {t('calendar.delete')}
             </Button>
           )}
@@ -1000,20 +1000,20 @@ export const Calendar = ({
   const sidebarView = sidebar && (
     <div className={sideClass} id={nodeId ? `${nodeId}-side` : undefined}>
       {editable && eventEditor && (
-        <Button variant="primary" className="mb-3 px-4 rounded-pill shadow-sm" onClick={createNow}>{`+ ${t('calendar.create')}`}</Button>
+        <Button variant="primary" className="rc-mb-3 rc-px-4 rc-rounded-pill rc-shadow-sm" onClick={createNow}>{`+ ${t('calendar.create')}`}</Button>
       )}
       <MiniMonth month={miniMonth} selected={date} today={today} firstDay={firstDay} fmt={fmt} t={t}
         onNav={(step) => setMiniMonth((m) => new Date(m.getFullYear(), m.getMonth() + step, 1))} onPick={goto} />
       {calendars.length > 0 && (
-        <div className="mt-3">
-          <div className="small fw-semibold mb-1">{t('calendar.myCalendars')}</div>
+        <div className="rc-mt-3">
+          <div className="rc-small rc-fw-semibold rc-mb-1">{t('calendar.myCalendars')}</div>
           {calendars.map((c) => {
             const color = calMap[String(c.id)].color;
             const on = !hiddenCalendars.includes(String(c.id));
             return (
-              <label key={c.id} className="d-flex align-items-center gap-2 py-1 small" style={{ cursor: 'pointer' }}>
+              <label key={c.id} className="rc-d-flex rc-align-items-center rc-gap-2 rc-py-1 rc-small" style={{ cursor: 'pointer' }}>
                 <input type="checkbox" checked={on} onChange={() => toggleCalendar(c.id)} style={{ accentColor: color, width: 16, height: 16 }} />
-                <span className="text-truncate">{c.name ?? c.id}</span>
+                <span className="rc-text-truncate">{c.name ?? c.id}</span>
               </label>
             );
           })}
@@ -1023,7 +1023,7 @@ export const Calendar = ({
   );
 
   const toolbar = (
-    <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+    <div className="rc-d-flex rc-flex-wrap rc-align-items-center rc-gap-2 rc-mb-2">
       {sidebar && sidebarToggle && (
         <button type="button" className="rc-menubtn" onClick={toggleSidebar} title={t('calendar.toggleSidebar')} aria-label={t('calendar.toggleSidebar')}
           aria-expanded={typeof sidebarOpen === 'boolean' ? sidebarOpen : undefined} aria-controls={nodeId ? `${nodeId}-side` : undefined}>
@@ -1032,14 +1032,14 @@ export const Calendar = ({
           </svg>
         </button>
       )}
-      <Button size="sm" variant="outline-secondary" className="rounded-pill px-3" onClick={() => goto(today)} title="T">{t('calendar.today')}</Button>
-      <div className="d-flex">
+      <Button size="sm" variant="outline-secondary" className="rc-rounded-pill rc-px-3" onClick={() => goto(today)} title="T">{t('calendar.today')}</Button>
+      <div className="rc-d-flex">
         <button type="button" className="rc-iconbtn" aria-label={t('calendar.previous')} onClick={() => goto(shiftDate(view, date, -1, { agendaDays }))}>‹</button>
         <button type="button" className="rc-iconbtn" aria-label={t('calendar.next')} onClick={() => goto(shiftDate(view, date, 1, { agendaDays }))}>›</button>
       </div>
-      <h2 className="rc-title" aria-live="polite">{title}</h2>
-      {loading && <Spinner animation="border" size="sm" role="status"><span className="visually-hidden">{t('common.loading')}</span></Spinner>}
-      <div className="ms-auto d-flex flex-wrap gap-2 align-items-center">
+      <h2 className="rc-cal-title" aria-live="polite">{title}</h2>
+      {loading && <Spinner animation="border" size="sm" role="status"><span className="rc-visually-hidden">{t('common.loading')}</span></Spinner>}
+      <div className="rc-ms-auto rc-d-flex rc-flex-wrap rc-gap-2 rc-align-items-center">
         {toolbarButtons(toolbarActions, actions, () => ({ calendar: nodeId, name: nodeId, view, date: dayKey(date) }))}
         {searchable && (
           <Form.Control size="sm" type="search" placeholder={t('calendar.search')} aria-label={t('calendar.search')} style={{ width: 180 }}
@@ -1059,13 +1059,13 @@ export const Calendar = ({
   );
 
   return (
-    <div ref={rootRef} data-rcube-calendar={nodeId} className={`rcube-cal mb-3 ${loading ? 'rc-loading' : ''} ${className}`.trim()}
+    <div ref={rootRef} data-rcube-calendar={nodeId} className={`rcube-cal rc-mb-3 ${loading ? 'rc-cal-loading' : ''} ${className}`.trim()}
       style={style} onKeyDown={onKeyDown}>
       <style>{CAL_CSS}</style>
       {sidebarView}
-      <div className="rc-main" style={{ height }}>
+      <div className="rc-cal-main" style={{ height }}>
         {showToolbar && toolbar}
-        <div className="rc-body" aria-busy={loading || undefined}>{body}</div>
+        <div className="rc-cal-body" aria-busy={loading || undefined}>{body}</div>
       </div>
       {detailView}
       {moreView}

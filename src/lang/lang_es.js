@@ -200,6 +200,10 @@ const messages = {
     close: "Cerrar",
     loading: "Cargando...",
   },
+  carousel: {
+    previous: "Anterior",
+    next: "Siguiente",
+  },
 
   layout: {
     componentNotFound: "Componente \"{name}\" no encontrado",

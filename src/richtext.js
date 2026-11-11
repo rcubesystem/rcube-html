@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { Button, ButtonGroup, Form } from "react-bootstrap";
+import { Button, ButtonGroup, Form } from "./ui";
 import { useTranslator } from "./i18n";
 import { runAction } from "./form";
 import { RICH_TEXT_TAGS, cleanHtml, escapeHtml, htmlToText, isHtml, richTextHtml } from "./richtextUtils";
@@ -38,10 +38,10 @@ const RICH_CSS = `
 .rc-rich-text p,.rc-rich-text div{margin:0 0 .5rem}
 .rc-rich-text h3,.rc-rich-text h4,.rc-rich-text h5{font-size:1.05rem;font-weight:600;margin:.75rem 0 .4rem}
 .rc-rich-text ul,.rc-rich-text ol{margin:0 0 .5rem;padding-left:1.4rem}
-.rc-rich-text blockquote{border-left:3px solid var(--bs-border-color);margin:0 0 .5rem;padding:.1rem 0 .1rem .75rem;color:var(--bs-secondary-color)}
-.rc-rte .rc-rte-bar .btn{display:inline-flex;align-items:center;justify-content:center;min-width:32px;gap:4px}
+.rc-rich-text blockquote{border-left:3px solid var(--rc-border-color);margin:0 0 .5rem;padding:.1rem 0 .1rem .75rem;color:var(--rc-secondary-color)}
+.rc-rte .rc-rte-bar .rc-btn{display:inline-flex;align-items:center;justify-content:center;min-width:32px;gap:4px}
 .rc-rte .rc-rte-bar svg{display:block}
-.rc-rte .rc-rte-box:focus-within{border-color:var(--bs-primary)!important;box-shadow:0 0 0 .2rem rgba(var(--bs-primary-rgb),.15)}
+.rc-rte .rc-rte-box:focus-within{border-color:var(--rc-primary)!important;box-shadow:0 0 0 .2rem rgba(var(--rc-primary-rgb),.15)}
 `;
 
 // Small icons (16px, currentColor) so the library needs no icon package
@@ -88,7 +88,7 @@ const toolGroups = (toolbar) => {
 /** Rich text shown safely (cleaned again here); older plain text keeps its line breaks */
 export const RichText = ({ html, value, emptyText, allowedTags, className = '', style, functionMap, ...props }) => {
   const content = html ?? value;
-  if (!content) return emptyText ? <div className={`text-body-secondary ${className}`.trim()} style={style}>{emptyText}</div> : null;
+  if (!content) return emptyText ? <div className={`rc-text-body-secondary ${className}`.trim()} style={style}>{emptyText}</div> : null;
   if (!isHtml(content)) return <div className={className} style={{ whiteSpace: 'pre-wrap', ...style }} {...props}>{content}</div>;
   return (
     <>
@@ -245,16 +245,16 @@ export const RichTextField = forwardRef(function RichTextField({
   const showBar = groups.length || sourceButton;
 
   return (
-    <Form.Group className={`rc-rte mb-3 ${className}`.trim()} style={style}>
+    <Form.Group className={`rc-rte rc-mb-3 ${className}`.trim()} style={style}>
       <style>{RICH_CSS}</style>
       {label && (
         <Form.Label htmlFor={`${fieldId}-editor`} onClick={() => box.current?.focus()}>
-          {label}{required && <span className="text-danger ms-1" aria-hidden="true">*</span>}
+          {label}{required && <span className="rc-text-danger rc-ms-1" aria-hidden="true">*</span>}
         </Form.Label>
       )}
-      <div className={`rc-rte-box border rounded ${message ? 'border-danger' : ''} ${locked ? 'bg-body-tertiary' : ''}`.trim()}>
+      <div className={`rc-rte-box rc-border rc-rounded ${message ? 'rc-border-danger' : ''} ${locked ? 'rc-bg-body-tertiary' : ''}`.trim()}>
         {showBar && (
-          <div className="rc-rte-bar d-flex flex-wrap gap-1 p-1 border-bottom bg-body-tertiary" role="toolbar" aria-label={t('richtext.toolbar', { label: label || '' }).trim()}>
+          <div className="rc-rte-bar rc-d-flex rc-flex-wrap rc-gap-1 rc-p-1 rc-border-bottom rc-bg-body-tertiary" role="toolbar" aria-label={t('richtext.toolbar', { label: label || '' }).trim()}>
             {groups.map((group, g) => (
               <ButtonGroup key={g} size="sm">
                 {group.map((tool) => {
@@ -264,28 +264,28 @@ export const RichTextField = forwardRef(function RichTextField({
                     <Button key={key} variant={(typeof tool === 'object' && tool.variant) || 'light'} title={title} aria-label={title} data-tool={key}
                       disabled={locked || source !== null} onMouseDown={(e) => e.preventDefault()} onClick={(e) => run(tool, e)}>
                       {typeof tool === 'object' ? (tool.icon ? <span aria-hidden="true">{tool.icon}</span> : null) : ICONS[tool]}
-                      {typeof tool === 'object' && tool.text ? <span className="small">{tool.text}</span> : null}
+                      {typeof tool === 'object' && tool.text ? <span className="rc-small">{tool.text}</span> : null}
                     </Button>
                   );
                 })}
               </ButtonGroup>
             ))}
             {sourceButton && (
-              <Button size="sm" variant={source !== null ? 'secondary' : 'light'} className="ms-auto" aria-pressed={source !== null} disabled={locked}
+              <Button size="sm" variant={source !== null ? 'secondary' : 'light'} className="rc-ms-auto" aria-pressed={source !== null} disabled={locked}
                 title={source !== null ? t('richtext.formattedTitle') : t('richtext.sourceTitle')}
                 onMouseDown={(e) => e.preventDefault()} onClick={toggleSource}>
-                {ICONS.source}<span className="small">{source !== null ? t('richtext.formatted') : t('richtext.source')}</span>
+                {ICONS.source}<span className="rc-small">{source !== null ? t('richtext.formatted') : t('richtext.source')}</span>
               </Button>
             )}
           </div>
         )}
         {source !== null && (
-          <Form.Control as="textarea" aria-label={t('richtext.sourceLabel', { label: label || '' }).trim()} className="border-0 rounded-0 font-monospace small"
+          <Form.Control as="textarea" aria-label={t('richtext.sourceLabel', { label: label || '' }).trim()} className="rc-border-0 rc-rounded-0 rc-font-monospace rc-small"
             spellCheck={false} style={{ minHeight, maxHeight, boxShadow: 'none' }} value={source} onChange={(e) => typeSource(e.target.value)} onBlur={onBlur} />
         )}
-        <div className={`position-relative ${source !== null ? 'd-none' : ''}`.trim()}>
-          {empty && placeholder && <div className="position-absolute text-body-secondary px-3 py-2 pe-none">{placeholder}</div>}
-          <div id={`${fieldId}-editor`} ref={box} className="rc-rich-text px-3 py-2" contentEditable={!locked} suppressContentEditableWarning
+        <div className={`rc-position-relative ${source !== null ? 'rc-d-none' : ''}`.trim()}>
+          {empty && placeholder && <div className="rc-position-absolute rc-text-body-secondary rc-px-3 rc-py-2 rc-pe-none">{placeholder}</div>}
+          <div id={`${fieldId}-editor`} ref={box} className="rc-rich-text rc-px-3 rc-py-2" contentEditable={!locked} suppressContentEditableWarning
             role="textbox" aria-multiline="true" aria-label={label} aria-required={required || undefined} aria-invalid={Boolean(message)} aria-readonly={locked || undefined}
             style={{ minHeight, maxHeight, overflowY: 'auto', outline: 'none' }}
             onInput={sync} onBlur={(e) => { sync(); onBlur?.(e); }} onFocus={onFocus} onPaste={onPaste} />
@@ -294,9 +294,9 @@ export const RichTextField = forwardRef(function RichTextField({
       <textarea ref={setStore} name={name} id={fieldId} required={required} hidden readOnly defaultValue="" tabIndex={-1} aria-hidden="true"
         data-rcube-richtext="" />
       {(hint || message || (maxLength && counter)) && (
-        <div className="d-flex gap-2">
-          {message ? <div className="invalid-feedback d-block">{message}</div> : hint ? <Form.Text className="text-body-secondary">{hint}</Form.Text> : null}
-          {maxLength && counter ? <Form.Text className={`ms-auto ${over ? 'text-danger' : 'text-body-secondary'}`}>{t('richtext.counter', { count: length, max: maxLength })}</Form.Text> : null}
+        <div className="rc-d-flex rc-gap-2">
+          {message ? <div className="rc-feedback rc-d-block">{message}</div> : hint ? <Form.Text className="rc-text-body-secondary">{hint}</Form.Text> : null}
+          {maxLength && counter ? <Form.Text className={`rc-ms-auto ${over ? 'rc-text-danger' : 'rc-text-body-secondary'}`}>{t('richtext.counter', { count: length, max: maxLength })}</Form.Text> : null}
         </div>
       )}
     </Form.Group>

@@ -7,7 +7,7 @@ import { Calendar } from './calendar';
 import { FileUploadField } from './upload';
 import { Tree } from './tree';
 import { RichText, RichTextField } from './richtext';
-import { Container, Row, Col, Image } from "react-bootstrap";
+import { Container, Row, Col, Image } from "./ui";
 
 // 1. Define UI components to resolve inside the layout
 
@@ -99,15 +99,15 @@ export const registerComponent = (name, component, { field = false, container = 
   if (container) ContainerTypes.add(name);
 };
 
-// Merge a node's runtime state into a copy of it: override props (style merged), and add Bootstrap's
-// d-none class when hidden so the element stays mounted (fields keep their values) but isn't shown
+// Merge a node's runtime state into a copy of it: override props (style merged), and add the
+// rc-d-none class when hidden so the element stays mounted (fields keep their values) but isn't shown
 const applyNodeState = (node, { props: overrides = {}, hidden } = {}) => {
   const props = {
     ...node.props,
     ...overrides,
     ...((node.props?.style || overrides.style) && { style: { ...node.props?.style, ...overrides.style } }),
   };
-  if (hidden) props.className = `${props.className || ''} d-none`.trim();
+  if (hidden) props.className = `${props.className || ''} rc-d-none`.trim();
   return { ...node, props };
 };
 
@@ -140,9 +140,10 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   const childProps = { functionMap, fieldRefs, errors, onFieldChange, values, pendingValues, nodeState, nested: true };
 
   // Handle structural Row container
+  //   { "type": "row", "props": { "gap": 3 | { "x": 2, "y": 3 }, "className": "..." }, "children": [ columns ] }
   if (node.type === 'row') {
     const row = (
-      <Row className={node.props?.className}>
+      <Row gap={node.props?.gap} className={node.props?.className} style={node.props?.style}>
         {node.children?.map((child) => (
           <LayoutParser key={child.id} node={child} {...childProps} />
         ))}
@@ -152,9 +153,11 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   }
 
   // Handle structural Column container
+  //   { "type": "column", "props": { "span": 6 | "auto" | { "xs": 12, "md": 6, "lg": 4 }, "className": "..." } }
+  //   no span: equal widths (or the widths its className gives, e.g. Bootstrap's "col-md-6" where Bootstrap is loaded)
   if (node.type === 'column') {
     return (
-      <Col className={node.props?.className}>
+      <Col span={node.props?.span} className={node.props?.className} style={node.props?.style}>
         {node.children?.map((child) => (
           <LayoutParser key={child.id} node={child} {...childProps} />
         ))}
@@ -165,7 +168,7 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   const componentName = node.type === 'component' ? node.componentName : node.type;
   const ComponentToRender = ComponentRegistry[componentName];
   if (!ComponentToRender) {
-    return <div className="text-danger">{t('layout.componentNotFound', { name: componentName })}</div>;
+    return <div className="rc-text-danger">{t('layout.componentNotFound', { name: componentName })}</div>;
   }
 
   if (RefFields.has(componentName)) {

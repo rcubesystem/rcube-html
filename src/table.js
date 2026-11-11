@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Spinner, Table } from "react-bootstrap";
+import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Spinner, Table } from "./ui";
 import { InputField, SelectField, runAction } from "./form";
 import { useTranslator } from "./i18n";
 import { toolbarButtons } from "./toolbar";
@@ -49,7 +49,7 @@ import {
  */
 
 const BREAKPOINTS = ['sm', 'md', 'lg', 'xl', 'xxl'];
-const alignClass = { start: 'text-start', center: 'text-center', end: 'text-end' };
+const alignClass = { start: 'rc-text-start', center: 'rc-text-center', end: 'rc-text-end' };
 
 // "YYYY-MM-DD" as a local date (avoids the UTC shift of new Date("YYYY-MM-DD"))
 const toDate = (value) => {
@@ -78,9 +78,9 @@ export const formatValue = (value, column = {}, t) => {
 
 /*
  * Looks: { variant, background, color, className, style }
- *   variant    - Bootstrap table color: primary, secondary, success, danger, warning, info, light, dark, active
- *   background - any CSS color (drawn through Bootstrap's --bs-table-bg-state, so it shows over stripes / hover)
- *   color      - text color (--bs-table-color-state)
+ *   variant    - table colour: primary, secondary, success, danger, warning, info, light, dark, active
+ *   background - any CSS color (drawn through --rc-table-bg-state, so it shows over stripes / hover)
+ *   color      - text color (--rc-table-color-state)
  * Used by row data (_variant / _look), rowRules, column look / headerLook / cellRules, hoverRow /
  * hoverColumn / hoverCell and selectedLook. When several apply, later ones win:
  * row → column → cell rules → selected → hover row → hover column → hover cell.
@@ -94,8 +94,8 @@ export const formatValue = (value, column = {}, t) => {
  *   --rc-table-selected-accent  the bar at its start  (default: the primary colour; "transparent": none)
  */
 const TABLE_CSS = `
-.rc-row-selected,.table>tbody>tr>.rc-row-selected,.table-hover>tbody>tr:hover>.rc-row-selected,.table-striped>tbody>tr:nth-of-type(odd)>.rc-row-selected{--bs-table-bg-state:var(--rc-table-selected-bg,rgba(var(--bs-primary-rgb),.2));--bs-table-color-state:var(--rc-table-selected-color,var(--bs-emphasis-color));font-weight:var(--rc-table-selected-weight,600)}
-.table>tbody>tr>.rc-row-selected:first-child{box-shadow:inset 3px 0 0 var(--rc-table-selected-accent,var(--bs-primary)),inset 0 0 0 9999px var(--bs-table-bg-state)}
+.rc-row-selected,.rc-table>tbody>tr>.rc-row-selected,.rc-table-hover>tbody>tr:hover>.rc-row-selected,.rc-table-striped>tbody>tr:nth-of-type(odd)>.rc-row-selected{--rc-table-bg-state:var(--rc-table-selected-bg,rgba(var(--rc-primary-rgb),.2));--rc-table-color-state:var(--rc-table-selected-color,var(--rc-emphasis-color));font-weight:var(--rc-table-selected-weight,600)}
+.rc-table>tbody>tr>.rc-row-selected:first-child{box-shadow:inset 3px 0 0 var(--rc-table-selected-accent,var(--rc-primary)),inset 0 0 0 9999px var(--rc-table-bg-state)}
 `;
 /** The app's colours for the chosen row: { background, color, weight, accent } (CSS values) on :root */
 export const configureTableLook = ({ background, color, weight, accent } = {}) => {
@@ -114,8 +114,8 @@ const lookFrom = (look) => {
     variant,
     className,
     style: {
-      ...(background && { '--bs-table-bg-state': background }),
-      ...(color && { '--bs-table-color-state': color }),
+      ...(background && { '--rc-table-bg-state': background }),
+      ...(color && { '--rc-table-color-state': color }),
       ...style,
     },
   };
@@ -128,7 +128,7 @@ const mergeLooks = (looks) => looks.filter(Boolean).reduce((merged, look) => ({
 }), { variant: undefined, classNames: [], style: {} });
 
 const lookProps = (merged, baseClass) => ({
-  className: [baseClass, merged.variant && `table-${merged.variant}`, ...merged.classNames].filter(Boolean).join(' ') || undefined,
+  className: [baseClass, merged.variant && `rc-table-${merged.variant}`, ...merged.classNames].filter(Boolean).join(' ') || undefined,
   style: Object.keys(merged.style).length ? merged.style : undefined,
 });
 
@@ -231,7 +231,7 @@ const CellEditor = ({ editor, value, fieldName, error, label, onChange }) => {
     type = 'text', options, placeholder, required, requiredMessage, pattern, patternMessage, rangeMessage,
     allowedValues, allowedValuesMessage, numberMessage, ...rest
   } = editor;
-  const common = { name: fieldName, error, className: 'mb-0', 'aria-label': label, required };
+  const common = { name: fieldName, error, className: 'rc-mb-0', 'aria-label': label, required };
   if (type === 'select') {
     return <SelectField {...common} options={options} placeholder={placeholder} value={value ?? ''} size="sm" onChange={(e) => onChange(e.target.value)} />;
   }
@@ -439,7 +439,7 @@ export const DataTable = ({
     </Button>
   );
   const rowActions = (column, row) => (
-    <div className="d-inline-flex flex-wrap gap-1">
+    <div className="rc-d-inline-flex rc-flex-wrap rc-gap-1">
       {column.actions
         .filter((item) => !item.hiddenWhen || !matchesRule(item.hiddenWhen, row))
         .map((item, i) => actionButton(item, i, () => rowContext(row), item.disabledWhen && matchesRule(item.disabledWhen, row)))}
@@ -466,7 +466,7 @@ export const DataTable = ({
 
   const cellClass = (column) => [
     alignClass[column.align],
-    column.hideBelow && BREAKPOINTS.includes(column.hideBelow) && `d-none d-${column.hideBelow}-table-cell`,
+    column.hideBelow && BREAKPOINTS.includes(column.hideBelow) && `rc-d-none rc-d-${column.hideBelow}-table-cell`,
     column.cellClassName,
   ].filter(Boolean).join(' ') || undefined;
 
@@ -531,8 +531,8 @@ export const DataTable = ({
   const showToolbar = title || searchable || columnToggle || addable || exportable || (selectable && removable)
     || toolbarActions?.length || canReset;
   const toolbar = showToolbar && (
-    <div className="d-flex flex-wrap gap-2 align-items-center mb-2">
-      {title ? <h6 className="mb-0 me-auto">{title}</h6> : <div className="me-auto" />}
+    <div className="rc-d-flex rc-flex-wrap rc-gap-2 rc-align-items-center rc-mb-2">
+      {title ? <h6 className="rc-mb-0 rc-me-auto">{title}</h6> : <div className="rc-me-auto" />}
       {searchable && (
         <Form.Control size="sm" type="search" value={query} style={{ maxWidth: 220 }}
           placeholder={searchPlaceholder || t('table.search')} aria-label={searchPlaceholder || t('table.search')}
@@ -578,15 +578,15 @@ export const DataTable = ({
 
   // ---------------------------------------------------------------- table view
   const tableView = (
-    // Bootstrap's own row hover is turned off when hoverRow sets a custom hover color
+    // The table's own row hover is turned off when hoverRow sets a custom hover color
     <Table striped={striped} bordered={bordered} hover={hover && !hoverRow} size={size} variant={variant}
-      responsive={stickyHeader ? false : responsive} className="align-middle mb-2">
+      responsive={stickyHeader ? false : responsive} className="rc-align-middle rc-mb-2">
       {caption && <caption>{caption}</caption>}
       <thead onMouseLeave={trackHover ? clearHover : undefined}>
         {headerRows.map((cells, level) => (
           <tr key={level}>
             {level === 0 && selectable && (
-              <th rowSpan={headerRows.length} style={{ width: 40 }} className={stickyHeader ? 'position-sticky top-0 bg-body' : undefined}>
+              <th rowSpan={headerRows.length} style={{ width: 40 }} className={stickyHeader ? 'rc-position-sticky rc-top-0 rc-bg-body' : undefined}>
                 {!single && <Form.Check type="checkbox" ref={selectAllRef} aria-label={t('table.selectAll')}
                   checked={allOnPageSelected} onChange={toggleAllOnPage} />}
               </th>
@@ -596,7 +596,7 @@ export const DataTable = ({
               // (group headers have no key, so compare only when a sort is active)
               const dir = sort && !group && sort.key === column.key ? sort.dir : null;
               const look = headerCellProps(group ? {} : column,
-                [group ? 'text-center' : cellClass(column), stickyHeader && 'position-sticky top-0 bg-body', column.headerClassName]
+                [group ? 'rc-text-center' : cellClass(column), stickyHeader && 'rc-position-sticky rc-top-0 rc-bg-body', column.headerClassName]
                   .filter(Boolean).join(' '));
               return (
                 <th key={column.key ?? column.title} colSpan={colSpan > 1 ? colSpan : undefined} rowSpan={rowSpan > 1 ? rowSpan : undefined}
@@ -606,13 +606,13 @@ export const DataTable = ({
                   onMouseEnter={trackHover && !group ? () => hoverAt(null, column.key) : undefined}
                   onClick={canSort ? () => toggleSort(column) : undefined}>
                   {column.title ?? column.key}
-                  {canSort && <span className="ms-1 text-muted small" aria-hidden="true">{dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '↕'}</span>}
+                  {canSort && <span className="rc-ms-1 rc-text-muted rc-small" aria-hidden="true">{dir === 'asc' ? '▲' : dir === 'desc' ? '▼' : '↕'}</span>}
                 </th>
               );
             })}
             {level === 0 && removable && (
-              <th rowSpan={headerRows.length} className={stickyHeader ? 'position-sticky top-0 bg-body' : undefined}>
-                <span className="visually-hidden">{t('table.remove')}</span>
+              <th rowSpan={headerRows.length} className={stickyHeader ? 'rc-position-sticky rc-top-0 rc-bg-body' : undefined}>
+                <span className="rc-visually-hidden">{t('table.remove')}</span>
               </th>
             )}
           </tr>
@@ -621,7 +621,7 @@ export const DataTable = ({
       <tbody onMouseLeave={trackHover ? clearHover : undefined}>
         {pageRows.length === 0 && (
           <tr>
-            <td colSpan={visible.length + leadCols + (removable ? 1 : 0)} className="text-center text-muted py-3">
+            <td colSpan={visible.length + leadCols + (removable ? 1 : 0)} className="rc-text-center rc-text-muted rc-py-3">
               {emptyText || t('table.empty')}
             </td>
           </tr>
@@ -648,7 +648,7 @@ export const DataTable = ({
                 );
               })}
               {removable && (
-                <td {...rowOnlyCellProps(row, key, 'text-end')} onMouseEnter={trackHover ? () => hoverAt(key, null) : undefined}>
+                <td {...rowOnlyCellProps(row, key, 'rc-text-end')} onMouseEnter={trackHover ? () => hoverAt(key, null) : undefined}>
                   {removeButton(row)}
                 </td>
               )}
@@ -658,7 +658,7 @@ export const DataTable = ({
       </tbody>
       {hasTotals && pageRows.length > 0 && (
         <tfoot>
-          <tr className="fw-semibold">
+          <tr className="rc-fw-semibold">
             {selectable && <td />}
             {visible.map((column, c) => (
               <td key={column.key} className={cellClass(column)}>
@@ -676,24 +676,24 @@ export const DataTable = ({
   // ---------------------------------------------------------------- card view (small screens)
   const stackAt = BREAKPOINTS.includes(stackBelow) ? stackBelow : null;
   const cardView = stackAt && (
-    <div className={`d-${stackAt}-none`}>
-      {pageRows.length === 0 && <p className="text-center text-muted py-3">{emptyText || t('table.empty')}</p>}
+    <div className={`rc-d-${stackAt}-none`}>
+      {pageRows.length === 0 && <p className="rc-text-center rc-text-muted rc-py-3">{emptyText || t('table.empty')}</p>}
       {pageRows.map((row) => {
         const key = rowKeyOf(row, rowKey);
         return (
-          <BsCard key={key} className={`mb-2 ${selectedKeys.has(key) ? 'border-primary' : ''}`} onClick={(e) => onRowClickHandler(row, e)}>
-            <BsCard.Body className="p-2">
+          <BsCard key={key} className={`rc-mb-2 ${selectedKeys.has(key) ? 'rc-border-primary' : ''}`} onClick={(e) => onRowClickHandler(row, e)}>
+            <BsCard.Body className="rc-p-2">
               {selectable && (
-                <Form.Check type={single ? 'radio' : 'checkbox'} name={single ? `${nodeId}-pick` : undefined} className="mb-1" label={t('table.selectRow')} id={`${nodeId}-card-${key}`}
+                <Form.Check type={single ? 'radio' : 'checkbox'} name={single ? `${nodeId}-pick` : undefined} className="rc-mb-1" label={t('table.selectRow')} id={`${nodeId}-card-${key}`}
                   checked={selectedKeys.has(key)} onChange={() => toggleRow(key)} />
               )}
               {visible.filter((column) => !column.hideInCards).map((column) => (
-                <div key={column.key} className="d-flex justify-content-between align-items-center gap-3 py-1 border-bottom">
-                  <span className="text-muted small">{column.title ?? column.key}</span>
-                  <span className="text-end">{renderCell(column, row)}</span>
+                <div key={column.key} className="rc-d-flex rc-justify-content-between rc-align-items-center rc-gap-3 rc-py-1 rc-border-bottom">
+                  <span className="rc-text-muted rc-small">{column.title ?? column.key}</span>
+                  <span className="rc-text-end">{renderCell(column, row)}</span>
                 </div>
               ))}
-              {removable && <div className="text-end pt-2">{removeButton(row)}</div>}
+              {removable && <div className="rc-text-end rc-pt-2">{removeButton(row)}</div>}
             </BsCard.Body>
           </BsCard>
         );
@@ -705,11 +705,11 @@ export const DataTable = ({
   const from = total ? (serverSide ? (currentPage - 1) * pageSize + (pageRows.length ? 1 : 0) : (currentPage - 1) * (paged ? pageSize : total) + 1) : 0;
   const to = serverSide ? (currentPage - 1) * pageSize + pageRows.length : paged ? Math.min(currentPage * pageSize, total) : total;
   const pagination = paged && (pageCount > 1 || pageSizeOptions) && (
-    <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-      <small className="text-muted">
-        {busy ? <><Spinner animation="border" size="sm" className="me-1" />{t('table.loading')}</> : t('table.showing', { from, to, total })}
+    <div className="rc-d-flex rc-flex-wrap rc-justify-content-between rc-align-items-center rc-gap-2">
+      <small className="rc-text-muted">
+        {busy ? <><Spinner animation="border" size="sm" className="rc-me-1" />{t('table.loading')}</> : t('table.showing', { from, to, total })}
       </small>
-      <div className="d-flex align-items-center gap-2">
+      <div className="rc-d-flex rc-align-items-center rc-gap-2">
         {pageSizeOptions && (
           <Form.Select size="sm" value={pageSize} style={{ width: 'auto' }} aria-label={t('table.rowsPerPage')} disabled={busy}
             onChange={(e) => changePageSize(Number(e.target.value))}>
@@ -717,7 +717,7 @@ export const DataTable = ({
           </Form.Select>
         )}
         {pageCount > 1 && (
-          <Pagination size="sm" className="mb-0">
+          <Pagination size="sm" className="rc-mb-0">
             <Pagination.First disabled={busy || currentPage === 1} onClick={() => goToPage(1)} />
             <Pagination.Prev disabled={busy || currentPage === 1} onClick={() => goToPage(currentPage - 1)} />
             {pageNumbers(currentPage, pageCount).map((p, i) => (p === '…'
@@ -732,20 +732,20 @@ export const DataTable = ({
   );
 
   return (
-    <div data-rcube-table={nodeId} className={`mb-3 ${className}`.trim()} style={style}>
+    <div data-rcube-table={nodeId} className={`rc-mb-3 ${className}`.trim()} style={style}>
       <style>{TABLE_CSS}</style>
       {toolbar}
-      <div className="position-relative" aria-busy={busy || undefined}>
-        <div className={stackAt ? `d-none d-${stackAt}-block` : undefined}
+      <div className="rc-position-relative" aria-busy={busy || undefined}>
+        <div className={stackAt ? `rc-d-none rc-d-${stackAt}-block` : undefined}
           style={stickyHeader ? { maxHeight: maxHeight || 400, overflow: 'auto' } : undefined}>
           {tableView}
         </div>
         {cardView}
         {/* server paging: the previous page stays, dimmed, under a spinner until the next one arrives */}
         {busy && (
-          <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-start justify-content-center pt-5"
-            style={{ background: 'rgba(var(--bs-body-bg-rgb), .6)', zIndex: 2 }} role="status">
-            <Spinner animation="border" size="sm" className="me-2" /><span>{t('table.loading')}</span>
+          <div className="rc-position-absolute rc-top-0 rc-start-0 rc-w-100 rc-h-100 rc-d-flex rc-align-items-start rc-justify-content-center rc-pt-5"
+            style={{ background: 'rgba(var(--rc-body-bg-rgb), .6)', zIndex: 2 }} role="status">
+            <Spinner animation="border" size="sm" className="rc-me-2" /><span>{t('table.loading')}</span>
           </div>
         )}
       </div>

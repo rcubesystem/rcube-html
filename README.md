@@ -1,20 +1,66 @@
 # rcube-html: An Open-Source, JSON-Driven HTML Page Renderer
 
-Schema-driven forms and layouts for **React + React-Bootstrap**. Describe rows, columns, fields and buttons as JSON-like objects; rcube-html renders them with validation, conditional fields, dependent selects, input masks, repeatable entries, runtime element changes and multi-language text.
+Schema-driven forms and layouts for **React**, with their own components and stylesheet — no Bootstrap needed. Describe rows, columns, fields and buttons as JSON-like objects; rcube-html renders them with validation, conditional fields, dependent selects, input masks, repeatable entries, runtime element changes and multi-language text.
 
 **Live demo and tutorials: [rcube-html.com](https://rcube-html.com/)** — every component with a live example, the events it fires, and copy-ready schema and page code ([source](https://github.com/rcubesystem/rcube-html-examples)).
 
 ```bash
-npm install rcube-html react-bootstrap bootstrap
+npm install rcube-html
 ```
 
-Peer dependencies: `react` ≥ 18, `react-dom` ≥ 18, `react-bootstrap` ≥ 2.10, `bootstrap` ≥ 5.3. Import Bootstrap's CSS once in your app:
+Peer dependencies: `react` ≥ 18, `react-dom` ≥ 18. Import the stylesheet once in your app:
 
 ```js
-import 'bootstrap/dist/css/bootstrap.min.css';
+import 'rcube-html/styles.css';
 ```
 
+Without it, rcube-html adds the same CSS to the page itself the first time it loads in the browser (importing it is better: it's in the page before anything draws).
+
 Works in Next.js App Router (the bundle is marked `"use client"`).
+
+## Styles and themes
+
+rcube-html draws its own buttons, fields, tables, pager, dropdowns, dialogs, tabs and so on, with `rc-` classes (`rc-btn rc-btn-primary`, `rc-input`, `rc-table`, …), so it runs the same in any page: with Bootstrap, inside Liferay (Clay), or on its own.
+
+**Colours, corners and sizes are CSS variables.** Set them on `:root` (or on any element, for one part of the page):
+
+```css
+:root {
+  --rc-primary: #0b5fff;          --rc-primary-rgb: 11, 95, 255;
+  --rc-danger: #da1414;           --rc-danger-rgb: 218, 20, 20;
+  --rc-body-color: #272833;       --rc-body-bg: #fff;
+  --rc-border-color: #e7e7ed;     --rc-border-radius: .25rem;
+  --rc-font-size: .875rem;
+}
+```
+
+The full list is at the top of `styles.css`: `--rc-{primary|secondary|success|info|warning|danger|light|dark}` (+ `-rgb`, `-text`, `-bg-subtle`, `-border-subtle`), `--rc-body-color`, `--rc-body-bg`, `--rc-emphasis-color`, `--rc-secondary-color`, `--rc-secondary-bg`, `--rc-tertiary-bg`, `--rc-border-color`, `--rc-border-width`, `--rc-border-radius` (`-sm`, `-lg`), `--rc-link-color`, `--rc-focus-ring`, `--rc-box-shadow`, `--rc-font-size`, and the layers `--rc-z-dropdown`, `--rc-z-modal`, `--rc-z-tooltip`.
+
+- **With Bootstrap 5.3 on the page**, every variable follows Bootstrap's (`--rc-primary` is `var(--bs-primary)`), so an app's Bootstrap theme colours rcube-html too. Component tweaks a theme makes to Bootstrap's own classes (`.btn { padding }`, `.table > * > * { padding }`) need the same lines for `.rc-btn`, `.rc-table`, … — each component has variables for that (`--rc-btn-padding-x`, `--rc-btn-radius`, `--rc-table-hover-bg`, …).
+- **In Liferay**, map the variables to the theme's (Clay's) once, in the theme or a client extension:
+
+  ```css
+  :root {
+    --rc-primary: var(--primary, #0b5fff);   --rc-primary-rgb: 11, 95, 255;
+    --rc-body-color: var(--body-color, #272833);
+    --rc-border-color: var(--gray-300, #e7e7ed);
+    --rc-border-radius: var(--border-radius, .25rem);
+  }
+  ```
+
+  Clay's own `.btn`, `.form-control`, `.table`, `.row`… never touch rcube-html (it uses none of them), and rcube-html's classes never touch Clay's.
+- **Dark:** `data-rc-theme="dark"` (or Bootstrap's `data-bs-theme="dark"`) on `<html>` or any element.
+
+**Classes for schemas.** Every node takes `props.className` and `props.style`. rcube-html's utility classes carry Bootstrap's names with `rc-` in front: `rc-d-flex`, `rc-d-md-none`, `rc-gap-2`, `rc-mt-3`, `rc-p-2`, `rc-text-center`, `rc-text-muted`, `rc-small`, `rc-fw-semibold`, `rc-border`, `rc-rounded`, `rc-bg-body-tertiary`, `rc-w-100`, `rc-col-md-6`, … On a page with Bootstrap its classes work in schemas too — but only there.
+
+**Your own components** (registerComponent) can use rcube-html's building blocks, which take react-bootstrap's props: `Button`, `ButtonGroup`, `CloseButton`, `Form` (`Form.Group`, `Form.Label`, `Form.Control`, `Form.Select`, `Form.Check`, `Form.Text`, `Form.Range`), `Table`, `Pagination`, `Dropdown`, `Image`, `Container`, `Row`, `Col`, `UiModal`, `UiCard`, `UiBadge`, `UiSpinner`, `UiProgressBar`, `Overlay` and `cx` (joins class names).
+
+### Upgrading from 0.6 (Bootstrap)
+
+- Remove `react-bootstrap` / `bootstrap` if only rcube-html needed them, and add `import 'rcube-html/styles.css'`.
+- A page that keeps Bootstrap for itself: schema `className`s with Bootstrap classes keep working; for schemas that must also render without Bootstrap, use `rc-` classes and the layout props (`span`, `gap`).
+- CSS you wrote against rcube-html's markup (`.table`, `.btn`, `.form-control`, `.pagination` inside its components) now targets `.rc-table`, `.rc-btn`, `.rc-input`, `.rc-pagination`, …; inline `--bs-table-bg-state` is `--rc-table-bg-state`.
+- Don't give your own elements class names rcube-html uses (`rc-card-body`, `rc-progress`, `rc-table-…`): pick another prefix.
 
 ## Quick start
 
@@ -38,7 +84,7 @@ const schema = [
 
 const buttons = [
   { type: 'row', id: 'row-buttons', children: [
-    { type: 'column', id: 'cb', props: { className: 'd-flex justify-content-end gap-2' }, children: [
+    { type: 'column', id: 'cb', props: { className: 'rc-d-flex rc-justify-content-end rc-gap-2' }, children: [
       { type: 'ButtonField', id: 'clear', props: { text: 'Clear', onClick: 'clearForm()' } },
       { type: 'ButtonField', id: 'submit', props: { type: 'submit', text: 'Submit', onClick: 'runValidation()' } },
     ] },
@@ -63,8 +109,8 @@ Every node has a unique `id`. Layout nodes have `children`; component nodes have
 
 | `type` | Renders | Notes |
 |---|---|---|
-| `row` | Bootstrap `Row` (top-level rows are wrapped in a `Container`) | `props.className` |
-| `column` | Bootstrap `Col` | `props.className` |
+| `row` | A 12-column grid row (top-level rows are wrapped in a container) | `props.gap` (0–5, or `{ x, y }`), `props.className` |
+| `column` | A column: equal widths, or `props.span` (`6`, `"auto"`, `{ xs: 12, md: 6, lg: 4 }`) | `props.span`, `props.className` |
 | `InputField` | `<input>` — text, email, password, number, date, tel, checkbox, radio, color, range, … | `props.type` |
 | `TextareaField` | `<textarea>` | `rows` (default 4) |
 | `SelectField` | `<select>` | `options`, `optionsFrom`, `placeholder` |
@@ -73,7 +119,7 @@ Every node has a unique `id`. Layout nodes have `children`; component nodes have
 | `SliderField` | Range slider showing its value | `min`, `max`, `step`, `defaultValue`, `showValue`, `valueSuffix` |
 | `RichTextField` | Rich text editor; value is cleaned HTML | `toolbar`, `source`, `maxLength` — see [Rich text](#rich-text) |
 | `RichText` | Shows rich text safely | `html`, `emptyText` |
-| `ButtonField` | React-Bootstrap `Button` | `text`, `variant`, `size`, `onClick` |
+| `ButtonField` | `<button>` (`rc-btn`) | `text`, `variant`, `size`, `onClick` |
 | `Text` | Any of h1–h6, p, span, small, strong, em, label, blockquote | `tag`, `text` |
 | `H1`…`H6`, `P`, `SPAN`, `SMALL`, `STRONG`, `EM`, `LABEL`, `BLOCKQUOTE` | Shortcuts for `Text` | `text` |
 | `A`, `IMG`, `DIV`, `LIST` | Link, responsive image, div, list (`items`) | |
@@ -121,7 +167,7 @@ Containers render other schema nodes — text, buttons, rows and **form fields**
   { children: [ /* nodes */ ] },
 ] }
 
-// Tooltip / Popover — around any nodes ("wrapperClassName": "d-block" for a full-width field)
+// Tooltip / Popover — around any nodes ("wrapperClassName": "rc-d-block" for a full-width field)
 { type: 'Tooltip', id: 'tip', props: { text: 'Your legal name', placement: 'top' }, children: [ /* nodes */ ] }
 { type: 'Popover', id: 'pop', props: { title: 'Help', text: '...', trigger: 'click' }, children: [ /* nodes */ ] }
 
@@ -181,7 +227,7 @@ A schema-driven table (also registered as `DynamicTable`) with pagination, sorti
 | `hideInCards` | Leave out of the small-screen card view |
 | `format` | `number`, `currency` (`currency`, `locale`), `percent`, `date`, `boolean`; `decimals` |
 | `template`, `link`, `linkTarget` | `"{first} {last}"` text; link href with `{field}` placeholders |
-| `badge` | `{ value: 'bootstrap color', default: '...' }` |
+| `badge` | `{ value: 'colour', default: '...' }` — primary, secondary, success, danger, warning, info, light, dark |
 | `render` | `(value, row) => ReactNode` (for schemas written in code) |
 | `editor` | Editable cell: `type` (`text`, `number`, `date`, `email`, `select` + `options`, `checkbox`, …), `placeholder`, `mask`, `uppercase`, and validation rules `required`, `pattern`, `min`, `max`, `allowedValues` with `*Message` overrides |
 | `total` | Footer aggregate: `sum`, `avg`, `min`, `max`, `count` (over all filtered rows); label via `totalLabel` |
@@ -189,7 +235,7 @@ A schema-driven table (also registered as `DynamicTable`) with pagination, sorti
 | `defaultValue` | Value for new rows |
 
 **Colors and hover** — every color option takes a *look*: `{ variant, background, color, className, style }`.
-`variant` is a Bootstrap table color (`primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`, `active`); `background` / `color` take any CSS color and are drawn through Bootstrap's table variables, so they show over striped rows.
+`variant` is a table colour (`primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark`, `active`); `background` / `color` take any CSS color and are drawn through the table's variables (`--rc-table-bg-state`, `--rc-table-color-state`), so they show over striped rows.
 
 ```js
 { type: 'DataTable', id: 'orders', props: {
@@ -200,17 +246,17 @@ A schema-driven table (also registered as `DynamicTable`) with pagination, sorti
   ],
   rows: [
     { id: 1, name: 'Ann', amount: 50, _variant: 'warning' },                  // one specific row
-    { id: 2, name: 'Bob', amount: 900, _look: { background: '#e7f1ff', className: 'fw-bold' } },
+    { id: 2, name: 'Bob', amount: 900, _look: { background: '#e7f1ff', className: 'rc-fw-bold' } },
   ],
   rowRules: [ { when: { field: 'status', equals: 'Overdue' }, variant: 'danger' } ],  // rows by value
   hoverRow:    { background: '#fff8e1' },                 // mouse over a row
   hoverColumn: { variant: 'primary' },                    // mouse over a cell / header → its column
-  hoverCell:   { background: '#ffd54f', className: 'fw-semibold' },
+  hoverCell:   { background: '#ffd54f', className: 'rc-fw-semibold' },
   selectedLook: { variant: 'active' },                    // selected rows (default)
 } }
 ```
 
-Conditions (`when`): `field` (defaults to the column for `cellRules`), `equals`, `notEquals`, `in`, `notIn`, `gt`, `gte`, `lt`, `lte`, `contains`, `empty`. When several looks apply, later ones win: row → column → cell rules → selected → hover row → hover column → hover cell. Setting `hoverRow` turns off Bootstrap's default grey row hover.
+Conditions (`when`): `field` (defaults to the column for `cellRules`), `equals`, `notEquals`, `in`, `notIn`, `gt`, `gte`, `lt`, `lte`, `contains`, `empty`. When several looks apply, later ones win: row → column → cell rules → selected → hover row → hover column → hover cell. Setting `hoverRow` turns off the table's default grey row hover.
 
 Change colors at runtime: `updateRow(id, key, { _variant: 'success' })`, `updateColumn(id, 'amount', { look: { background: '#e8f5e9' } })`, or `setNodeProps(id, { rowRules: [...], hoverRow: {...} })`.
 
@@ -738,7 +784,7 @@ Container components receive `node`, `nodeId`, `items` (translated), `renderNode
 
 ```jsx
 const Panel = ({ node, renderNodes, title }) => (
-  <section className="border rounded p-3 mb-3">
+  <section className="rc-border rc-rounded rc-p-3 rc-mb-3">
     <h6>{title}</h6>
     {renderNodes(node.children)}
   </section>

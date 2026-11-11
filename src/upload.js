@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { Button, Form, Modal, ProgressBar } from "react-bootstrap";
+import { Button, Form, Modal, ProgressBar } from "./ui";
 import { useTranslator } from "./i18n";
 
 /*
@@ -31,32 +31,32 @@ import { useTranslator } from "./i18n";
  */
 
 const UPLOAD_CSS = `
-.rc-upload .rc-drop{border:2px dashed var(--bs-border-color);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;
-  background:var(--bs-tertiary-bg);transition:border-color .15s,background-color .15s,transform .15s;outline:none}
+.rc-upload .rc-drop{border:2px dashed var(--rc-border-color);border-radius:12px;padding:28px 16px;text-align:center;cursor:pointer;
+  background:var(--rc-tertiary-bg);transition:border-color .15s,background-color .15s,transform .15s;outline:none}
 .rc-upload .rc-drop.rc-compact{padding:10px 14px;display:flex;align-items:center;gap:10px;text-align:left}
-.rc-upload .rc-drop:hover,.rc-upload .rc-drop:focus-visible{border-color:var(--bs-primary);background:rgba(var(--bs-primary-rgb),.04)}
-.rc-upload .rc-drop:focus-visible{box-shadow:0 0 0 .25rem rgba(var(--bs-primary-rgb),.25)}
-.rc-upload .rc-drop.rc-over{border-color:var(--bs-primary);background:rgba(var(--bs-primary-rgb),.1);transform:scale(1.01)}
-.rc-upload .rc-drop.rc-invalid{border-color:var(--bs-danger)}
+.rc-upload .rc-drop:hover,.rc-upload .rc-drop:focus-visible{border-color:var(--rc-primary);background:rgba(var(--rc-primary-rgb),.04)}
+.rc-upload .rc-drop:focus-visible{box-shadow:0 0 0 .25rem rgba(var(--rc-primary-rgb),.25)}
+.rc-upload .rc-drop.rc-over{border-color:var(--rc-primary);background:rgba(var(--rc-primary-rgb),.1);transform:scale(1.01)}
+.rc-upload .rc-drop.rc-up-invalid{border-color:var(--rc-danger)}
 .rc-upload .rc-drop.rc-disabled{opacity:.6;cursor:not-allowed}
-.rc-upload .rc-drop-icon{color:var(--bs-primary)}
+.rc-upload .rc-drop-icon{color:var(--rc-primary)}
 .rc-upload .rc-files{list-style:none;padding:0;margin:8px 0 0}
-.rc-upload .rc-file{display:flex;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--bs-border-color);border-radius:8px;margin-top:8px;background:var(--bs-body-bg)}
-.rc-upload .rc-file.rc-bad{border-color:var(--bs-danger-border-subtle);background:var(--bs-danger-bg-subtle)}
+.rc-upload .rc-file{display:flex;gap:12px;align-items:center;padding:8px 10px;border:1px solid var(--rc-border-color);border-radius:8px;margin-top:8px;background:var(--rc-body-bg)}
+.rc-upload .rc-file.rc-bad{border-color:var(--rc-danger-border-subtle);background:var(--rc-danger-bg-subtle)}
 .rc-upload .rc-thumb{width:44px;height:44px;border-radius:6px;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;
   font-size:.65rem;font-weight:700;color:#fff;letter-spacing:.02em;border:0;padding:0;overflow:hidden}
 .rc-upload button.rc-thumb{cursor:zoom-in}
-.rc-upload .rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px;list-style:none;padding:0}
-.rc-upload .rc-card{border:1px solid var(--bs-border-color);border-radius:8px;overflow:hidden;position:relative;background:var(--bs-body-bg)}
-.rc-upload .rc-card.rc-bad{border-color:var(--bs-danger)}
-.rc-upload .rc-card .rc-thumb{width:100%;height:110px;border-radius:0;font-size:1rem}
-.rc-upload .rc-card-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px}
-.rc-upload .rc-icon-btn{border:0;border-radius:6px;min-width:28px;height:28px;padding:0 6px;font-size:.8rem;background:var(--bs-secondary-bg);color:var(--bs-body-color)}
-.rc-upload .rc-icon-btn:hover{background:var(--bs-tertiary-bg);filter:brightness(.95)}
-.rc-upload .rc-icon-btn:disabled{opacity:.5}
-.rc-upload .rc-progress{height:4px}
-.rc-upload-overlay{position:fixed;inset:0;z-index:2000;background:rgba(var(--bs-primary-rgb),.12);border:3px dashed var(--bs-primary);
-  display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:1.5rem;font-weight:600;color:var(--bs-primary)}
+.rc-upload .rc-up-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px;list-style:none;padding:0}
+.rc-upload .rc-up-card{border:1px solid var(--rc-border-color);border-radius:8px;overflow:hidden;position:relative;background:var(--rc-body-bg)}
+.rc-upload .rc-up-card.rc-bad{border-color:var(--rc-danger)}
+.rc-upload .rc-up-card .rc-thumb{width:100%;height:110px;border-radius:0;font-size:1rem}
+.rc-upload .rc-up-card-actions{position:absolute;top:4px;right:4px;display:flex;gap:4px}
+.rc-upload .rc-up-icon-btn{border:0;border-radius:6px;min-width:28px;height:28px;padding:0 6px;font-size:.8rem;background:var(--rc-secondary-bg);color:var(--rc-body-color)}
+.rc-upload .rc-up-icon-btn:hover{background:var(--rc-tertiary-bg);filter:brightness(.95)}
+.rc-upload .rc-up-icon-btn:disabled{opacity:.5}
+.rc-upload .rc-up-progress{height:4px}
+.rc-upload-overlay{position:fixed;inset:0;z-index:2000;background:rgba(var(--rc-primary-rgb),.12);border:3px dashed var(--rc-primary);
+  display:flex;align-items:center;justify-content:center;pointer-events:none;font-size:1.5rem;font-weight:600;color:var(--rc-primary)}
 `;
 
 // ---------------------------------------------------------------- helpers
@@ -452,8 +452,8 @@ export const FileUploadField = forwardRef(function FileUploadField({
       default: return f.error || t('upload.failed');
     }
   };
-  const statusColor = (f) => (f.status === 'error' || f.status === 'rejected' ? 'var(--bs-danger-text-emphasis)'
-    : f.status === 'done' ? 'var(--bs-success-text-emphasis)' : 'var(--bs-secondary-color)');
+  const statusColor = (f) => (f.status === 'error' || f.status === 'rejected' ? 'var(--rc-danger-text)'
+    : f.status === 'done' ? 'var(--rc-success-text)' : 'var(--rc-secondary-color)');
 
   const openPreview = (f) => {
     onFileClick?.({ field: name, file: publicOf(f) });
@@ -468,7 +468,7 @@ export const FileUploadField = forwardRef(function FileUploadField({
     const inner = src
       ? <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
       : extOf(f.name);
-    const look = { background: src ? 'var(--bs-secondary-bg)' : fileKindColor(f) };
+    const look = { background: src ? 'var(--rc-secondary-bg)' : fileKindColor(f) };
     return clickable
       ? <button type="button" className="rc-thumb" style={look} onClick={() => openPreview(f)} aria-label={t('upload.preview', { name: f.name })}>{inner}</button>
       : <span className="rc-thumb" style={look} aria-hidden="true">{inner}</span>;
@@ -477,13 +477,13 @@ export const FileUploadField = forwardRef(function FileUploadField({
   const actionsOf = (f) => (
     <>
       {f.status === 'uploading' && (
-        <button type="button" className="rc-icon-btn" onClick={() => cancel(f)} aria-label={`${t('upload.cancel')} ${f.name}`} title={t('upload.cancel')}>■</button>
+        <button type="button" className="rc-up-icon-btn" onClick={() => cancel(f)} aria-label={`${t('upload.cancel')} ${f.name}`} title={t('upload.cancel')}>■</button>
       )}
       {f.status === 'error' && canUpload && f.file && (
-        <button type="button" className="rc-icon-btn" onClick={() => retry(f)} aria-label={`${t('upload.retry')} ${f.name}`} title={t('upload.retry')}>↻</button>
+        <button type="button" className="rc-up-icon-btn" onClick={() => retry(f)} aria-label={`${t('upload.retry')} ${f.name}`} title={t('upload.retry')}>↻</button>
       )}
       {f.status !== 'uploading' && (
-        <button type="button" className="rc-icon-btn" onClick={() => remove(f)} disabled={f.removing || disabled}
+        <button type="button" className="rc-up-icon-btn" onClick={() => remove(f)} disabled={f.removing || disabled}
           aria-label={`${f.status === 'rejected' ? t('upload.dismiss') : t('upload.remove')} ${f.name}`} title={f.status === 'rejected' ? t('upload.dismiss') : t('upload.remove')}>✕</button>
       )}
     </>
@@ -491,16 +491,16 @@ export const FileUploadField = forwardRef(function FileUploadField({
 
   const bad = (f) => f.status === 'error' || f.status === 'rejected';
   const listView = visible.length > 0 && (variant === 'grid' ? (
-    <ul className="rc-grid">
+    <ul className="rc-up-grid">
       {visible.map((f) => (
-        <li key={f.id} className={`rc-card ${bad(f) ? 'rc-bad' : ''}`}>
+        <li key={f.id} className={`rc-up-card ${bad(f) ? 'rc-bad' : ''}`}>
           {thumbOf(f)}
-          <div className="rc-card-actions">{actionsOf(f)}</div>
-          <div className="p-2">
-            {f.title && <div className="small fw-semibold text-truncate" title={f.title}>{f.title}</div>}
-            <div className={`small text-truncate ${f.title ? 'text-muted' : 'fw-semibold'}`} title={f.name}>{f.name}</div>
-            <div className="small" style={{ color: statusColor(f) }}>{statusText(f)}{f.size != null && !bad(f) && <span className="text-muted">{` · ${formatBytes(f.size, locale)}`}</span>}</div>
-            {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-progress mt-1" aria-label={f.name} />}
+          <div className="rc-up-card-actions">{actionsOf(f)}</div>
+          <div className="rc-p-2">
+            {f.title && <div className="rc-small rc-fw-semibold rc-text-truncate" title={f.title}>{f.title}</div>}
+            <div className={`rc-small rc-text-truncate ${f.title ? 'rc-text-muted' : 'rc-fw-semibold'}`} title={f.name}>{f.name}</div>
+            <div className="rc-small" style={{ color: statusColor(f) }}>{statusText(f)}{f.size != null && !bad(f) && <span className="rc-text-muted">{` · ${formatBytes(f.size, locale)}`}</span>}</div>
+            {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-up-progress rc-mt-1" aria-label={f.name} />}
           </div>
         </li>
       ))}
@@ -510,18 +510,18 @@ export const FileUploadField = forwardRef(function FileUploadField({
       {visible.map((f) => (
         <li key={f.id} className={`rc-file ${bad(f) ? 'rc-bad' : ''}`}>
           {thumbOf(f)}
-          <div className="flex-grow-1" style={{ minWidth: 0 }}>
-            {f.title && <div className="small fw-semibold text-truncate" title={f.title}>{f.title}</div>}
-            <div className="d-flex gap-2 align-items-baseline">
+          <div className="rc-flex-grow-1" style={{ minWidth: 0 }}>
+            {f.title && <div className="rc-small rc-fw-semibold rc-text-truncate" title={f.title}>{f.title}</div>}
+            <div className="rc-d-flex rc-gap-2 rc-align-items-baseline">
               {f.url && f.status === 'done'
-                ? <a href={f.url} target="_blank" rel="noopener noreferrer" className={`small text-truncate ${f.title ? '' : 'fw-semibold'}`} title={f.name}>{f.name}</a>
-                : <span className={`small text-truncate ${f.title ? 'text-muted' : 'fw-semibold'}`} title={f.name}>{f.name}</span>}
-              <span className="small text-muted ms-auto text-nowrap" style={{ flex: "none" }}>{formatBytes(f.size, locale)}</span>
+                ? <a href={f.url} target="_blank" rel="noopener noreferrer" className={`rc-small rc-text-truncate ${f.title ? '' : 'rc-fw-semibold'}`} title={f.name}>{f.name}</a>
+                : <span className={`rc-small rc-text-truncate ${f.title ? 'rc-text-muted' : 'rc-fw-semibold'}`} title={f.name}>{f.name}</span>}
+              <span className="rc-small rc-text-muted rc-ms-auto rc-text-nowrap" style={{ flex: "none" }}>{formatBytes(f.size, locale)}</span>
             </div>
-            {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-progress my-1" aria-label={f.name} />}
-            <div className="small" style={{ color: statusColor(f) }}>{statusText(f)}</div>
+            {f.status === 'uploading' && <ProgressBar now={f.progress} className="rc-up-progress rc-my-1" aria-label={f.name} />}
+            <div className="rc-small" style={{ color: statusColor(f) }}>{statusText(f)}</div>
           </div>
-          <div className="d-flex gap-1" style={{ flex: "none" }}>{actionsOf(f)}</div>
+          <div className="rc-d-flex rc-gap-1" style={{ flex: "none" }}>{actionsOf(f)}</div>
         </li>
       ))}
     </ul>
@@ -538,23 +538,23 @@ export const FileUploadField = forwardRef(function FileUploadField({
   };
 
   return (
-    <Form.Group className={`rc-upload mb-3 ${className}`.trim()} style={style}>
+    <Form.Group className={`rc-upload rc-mb-3 ${className}`.trim()} style={style}>
       <style>{UPLOAD_CSS}</style>
-      {label && <Form.Label htmlFor={`${fieldId}-input`}>{label}{required && <span className="text-danger"> *</span>}</Form.Label>}
+      {label && <Form.Label htmlFor={`${fieldId}-input`}>{label}{required && <span className="rc-text-danger"> *</span>}</Form.Label>}
       {fileTitle && (
-        <div className="mb-2" style={{ maxWidth: 420 }}>
-          <Form.Label htmlFor={`${fieldId}-title`} className="small mb-1">{fileTitleLabel || t('upload.fileTitle')}</Form.Label>
+        <div className="rc-mb-2" style={{ maxWidth: 420 }}>
+          <Form.Label htmlFor={`${fieldId}-title`} className="rc-small rc-mb-1">{fileTitleLabel || t('upload.fileTitle')}</Form.Label>
           <Form.Control id={`${fieldId}-title`} size="sm" value={nextTitle} maxLength={titleMax} disabled={disabled}
             placeholder={fileTitlePlaceholder || t('upload.fileTitlePlaceholder')} aria-describedby={`${fieldId}-title-hint`}
             onChange={(e) => setNextTitle(e.target.value.slice(0, titleMax))} />
-          <div id={`${fieldId}-title-hint`} className="small text-muted">{t('upload.fileTitleHint', { max: titleMax })}</div>
+          <div id={`${fieldId}-title-hint`} className="rc-small rc-text-muted">{t('upload.fileTitleHint', { max: titleMax })}</div>
         </div>
       )}
       <div ref={setRef} id={fieldId} data-rcube-upload="" data-uploading={active || undefined} data-pending={(canUpload && queued.length > 0) || undefined}
         data-failed={failed.length > 0 || undefined}
         role="button" tabIndex={disabled ? -1 : 0} aria-disabled={disabled || undefined}
         aria-describedby={`${fieldId}-hint`} aria-invalid={Boolean(error) || undefined}
-        className={['rc-drop', compact && 'rc-compact', over && 'rc-over', error && 'rc-invalid', disabled && 'rc-disabled'].filter(Boolean).join(' ')}
+        className={['rc-drop', compact && 'rc-compact', over && 'rc-over', error && 'rc-up-invalid', disabled && 'rc-disabled'].filter(Boolean).join(' ')}
         {...dropProps}>
         <input ref={inputRef} id={`${fieldId}-input`} type="file" hidden multiple={multiple} accept={accept} capture={capture} disabled={disabled}
           {...(directory && { webkitdirectory: '', directory: '' })}
@@ -562,35 +562,35 @@ export const FileUploadField = forwardRef(function FileUploadField({
         {compact ? (
           <>
             <span className="rc-drop-icon"><UploadIcon size={24} /></span>
-            <span className="flex-grow-1">
+            <span className="rc-flex-grow-1">
               <span>{over ? t('upload.dropNow') : (title || t('upload.dropHere'))}</span>
-              {hintText && <span id={`${fieldId}-hint`} className="d-block small text-muted">{hintText}</span>}
+              {hintText && <span id={`${fieldId}-hint`} className="rc-d-block rc-small rc-text-muted">{hintText}</span>}
             </span>
             <Button size="sm" variant="outline-primary" disabled={disabled} onClick={openPicker}>{buttonText || t('upload.browse')}</Button>
           </>
         ) : (
           <>
-            <div className="rc-drop-icon mb-2"><UploadIcon /></div>
-            <div className="fw-semibold">{over ? t('upload.dropNow') : (title || t('upload.dropHere'))}</div>
-            <div className="small text-muted my-1">{t('upload.or')}</div>
+            <div className="rc-drop-icon rc-mb-2"><UploadIcon /></div>
+            <div className="rc-fw-semibold">{over ? t('upload.dropNow') : (title || t('upload.dropHere'))}</div>
+            <div className="rc-small rc-text-muted rc-my-1">{t('upload.or')}</div>
             <Button size="sm" variant="outline-primary" disabled={disabled} onClick={openPicker}>{buttonText || t('upload.browse')}</Button>
-            {hintText && <div id={`${fieldId}-hint`} className="small text-muted mt-2">{hintText}</div>}
-            {paste && !disabled && <div className="small text-muted">{t('upload.pasteHint')}</div>}
+            {hintText && <div id={`${fieldId}-hint`} className="rc-small rc-text-muted rc-mt-2">{hintText}</div>}
+            {paste && !disabled && <div className="rc-small rc-text-muted">{t('upload.pasteHint')}</div>}
           </>
         )}
       </div>
-      {error && <div className="invalid-feedback d-block">{error}</div>}
+      {error && <div className="rc-feedback rc-d-block">{error}</div>}
 
       {files.length > 0 && (
-        <div className="d-flex flex-wrap align-items-center gap-2 mt-2 small">
-          <span className="text-muted">{t('upload.summary', { count: counted.length, size: formatBytes(totalSize, locale) })}</span>
+        <div className="rc-d-flex rc-flex-wrap rc-align-items-center rc-gap-2 rc-mt-2 rc-small">
+          <span className="rc-text-muted">{t('upload.summary', { count: counted.length, size: formatBytes(totalSize, locale) })}</span>
           {uploading.length > 0 && (
-            <span className="d-flex align-items-center gap-2 flex-grow-1" style={{ minWidth: 120, maxWidth: 260 }}>
-              <ProgressBar now={overall} className="rc-progress flex-grow-1" aria-label={t('upload.overall')} />
-              <span className="text-muted">{`${overall}%`}</span>
+            <span className="rc-d-flex rc-align-items-center rc-gap-2 rc-flex-grow-1" style={{ minWidth: 120, maxWidth: 260 }}>
+              <ProgressBar now={overall} className="rc-up-progress rc-flex-grow-1" aria-label={t('upload.overall')} />
+              <span className="rc-text-muted">{`${overall}%`}</span>
             </span>
           )}
-          <span className="ms-auto d-flex gap-2">
+          <span className="rc-ms-auto rc-d-flex rc-gap-2">
             {canUpload && queued.length > 0 && (
               <Button size="sm" variant="primary" onClick={uploadAll} disabled={disabled}>{t('upload.uploadAll', { count: queued.length })}</Button>
             )}
@@ -602,12 +602,12 @@ export const FileUploadField = forwardRef(function FileUploadField({
         </div>
       )}
       {listView}
-      <div className="visually-hidden" aria-live="polite">{announce}</div>
+      <div className="rc-visually-hidden" aria-live="polite">{announce}</div>
       {overPage && <div className="rc-upload-overlay">{t('upload.dropAnywhere', { label: label || t('upload.files') })}</div>}
 
       <Modal show={Boolean(previewing)} onHide={() => setPreviewing(null)} size="lg" centered>
-        <Modal.Header closeButton><Modal.Title as="h6" className="text-truncate">{previewing?.name}</Modal.Title></Modal.Header>
-        <Modal.Body className="text-center">
+        <Modal.Header closeButton><Modal.Title as="h6" className="rc-text-truncate">{previewing?.name}</Modal.Title></Modal.Header>
+        <Modal.Body className="rc-text-center">
           {previewing && <img src={previewing.thumb || previewing.url} alt={previewing.name} style={{ maxWidth: '100%', maxHeight: '70vh' }} />}
         </Modal.Body>
       </Modal>

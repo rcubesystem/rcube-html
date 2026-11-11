@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
-import { Form, Button } from "react-bootstrap";
+import { Form, Button } from "./ui";
 import { REVEAL_EVENT } from "./components";
 import { htmlToText } from "./richtextUtils";
 // Translation: each form supplies its translator via context (see i18n.js / useDynamicTag)
@@ -13,19 +13,19 @@ import {
   ancestorIds, findTreeNode, initiallyExpanded, insertTreeNode, isBranch, mapTreeNode, moveTreeNode, removeTreeNode, walkTree,
 } from "./treeUtils";
 
-// Field wrapper spacing: mb-3 unless the schema's className sets its own margin (e.g. "mb-0" in table cells)
-const withSpacing = (className = '') => (/(^|\s)(m|mb|my)-(\d|auto)(\s|$)/.test(className) ? className : `mb-3 ${className}`.trim());
+// Field wrapper spacing: rc-mb-3 unless the schema's className sets its own margin ("rc-mb-0" in table cells; Bootstrap's "mb-0" too)
+const withSpacing = (className = '') => (/(^|\s)(rc-)?(m|mb|my)-(\d|auto)(\s|$)/.test(className) ? className : `rc-mb-3 ${className}`.trim());
 
 // Label text with a red * when the field is required
 const LabelText = ({ label, required }) => (
   <>
     {label}
-    {required && <span className="text-danger ms-1" aria-hidden="true">*</span>}
+    {required && <span className="rc-text-danger rc-ms-1" aria-hidden="true">*</span>}
   </>
 );
 
 // Help text under a field (schema "hint"); the error replaces it while there is one
-const FieldHint = ({ hint, error }) => (hint && !error ? <Form.Text className="d-block text-body-secondary">{hint}</Form.Text> : null);
+const FieldHint = ({ hint, error }) => (hint && !error ? <Form.Text className="rc-d-block rc-text-body-secondary">{hint}</Form.Text> : null);
 
 const countDigits = (s) => s.replace(/\D/g, '').length;
 
@@ -155,7 +155,7 @@ export const InputField = forwardRef(function InputField(
           isInvalid={!!error}
           {...props}
         />
-        {label && <Form.Check.Label className="text-body"><LabelText label={label} required={required} /></Form.Check.Label>}
+        {label && <Form.Check.Label className="rc-text-body"><LabelText label={label} required={required} /></Form.Check.Label>}
         <Form.Control.Feedback type="invalid">{error}</Form.Control.Feedback>
         <FieldHint hint={hint} error={error} />
       </Form.Check>
@@ -277,7 +277,7 @@ const ChoiceGroup = forwardRef(function ChoiceGroup(
   const isChecked = (optValue) => (type === 'radio' ? value === optValue : Array.isArray(value) && value.includes(optValue));
   return (
     <Form.Group as="fieldset" ref={ref} className={withSpacing(className)} {...props}>
-      {label && <Form.Label as="legend" className="fs-6 mb-2"><LabelText label={label} required={required} /></Form.Label>}
+      {label && <Form.Label as="legend" className="rc-fs-6 rc-mb-2"><LabelText label={label} required={required} /></Form.Label>}
       {options.map((opt) => {
         const optValue = typeof opt === 'string' ? opt : opt.value;
         const optLabel = typeof opt === 'string' ? opt : opt.label;
@@ -294,13 +294,13 @@ const ChoiceGroup = forwardRef(function ChoiceGroup(
               isInvalid={!!error}
             />
             {/* text-body keeps the option text its normal color when invalid; only the input turns red */}
-            <Form.Check.Label className="text-body">
+            <Form.Check.Label className="rc-text-body">
               <LabelText label={optLabel} required={requiredOptions.includes(optValue)} />
             </Form.Check.Label>
           </Form.Check>
         );
       })}
-      <Form.Control.Feedback type="invalid" className={error ? 'd-block' : ''}>{error}</Form.Control.Feedback>
+      <Form.Control.Feedback type="invalid" className={error ? 'rc-d-block' : ''}>{error}</Form.Control.Feedback>
       <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
@@ -354,9 +354,9 @@ export const SliderField = forwardRef(function SliderField(
   return (
     <Form.Group controlId={id || name} className={withSpacing(className)}>
       {(label || showValue) && (
-        <Form.Label className="d-flex justify-content-between w-100">
+        <Form.Label className="rc-d-flex rc-justify-content-between rc-w-100">
           <span>{label && <LabelText label={label} required={required} />}</span>
-          {showValue && <span className="badge text-bg-secondary">{display}{valueSuffix}</span>}
+          {showValue && <span className="rc-badge rc-text-bg-secondary">{display}{valueSuffix}</span>}
         </Form.Label>
       )}
       <Form.Range
@@ -369,7 +369,7 @@ export const SliderField = forwardRef(function SliderField(
         onChange={(event) => { setDisplay(event.target.value); onChange?.(event); }}
         {...props}
       />
-      <Form.Control.Feedback type="invalid" className={error ? 'd-block' : ''}>{error}</Form.Control.Feedback>
+      <Form.Control.Feedback type="invalid" className={error ? 'rc-d-block' : ''}>{error}</Form.Control.Feedback>
       <FieldHint hint={hint} error={error} />
     </Form.Group>
   );
@@ -539,7 +539,7 @@ const tableNodesOf = (nodes = [], result = []) => {
 const isTableRendered = (id) => {
   if (typeof document === 'undefined') return false;
   const el = [...document.querySelectorAll('[data-rcube-table]')].find((e) => e.getAttribute('data-rcube-table') === id);
-  return Boolean(el && !el.closest('.d-none'));
+  return Boolean(el && !el.closest('.rc-d-none, .d-none'));
 };
 
 /**
@@ -1078,7 +1078,7 @@ export const createFormActions = ({ fieldRefs, setFormErrors, setFormValues, pen
       const newErrors = {};
       Object.entries(fieldRefs.current).forEach(([name, el]) => {
         // Fields hidden with hideNode (or inside a hidden row / column) are not validated
-        if (el.closest?.('.d-none')) return;
+        if (el.closest?.('.rc-d-none, .d-none')) return;
         // translateProps turns "@key" messages from the schema into the active language
         const message = validateField(el, translateProps(fieldProps[name], t), t);
         if (message) newErrors[name] = message;
@@ -1143,7 +1143,7 @@ export const resolveEventProps = (props = {}, functionMap, getContext) => Object
     .map(([key, action]) => [key, (event) => runAction(functionMap, action, event, getContext?.(event))])
 );
 
-// Default Bootstrap variant per button type; the schema can override with "variant"
+// Default variant per button type; the schema can override with "variant"
 const buttonVariants = { submit: 'primary', reset: 'outline-secondary', button: 'outline-primary' };
 
 export const ButtonField = ({ text, type = 'button', variant, functionMap, onClick, ...props }) => {

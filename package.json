@@ -1,17 +1,17 @@
 {
   "name": "rcube-html",
-  "version": "0.6.0",
-  "description": "Schema-driven React + Bootstrap forms and layouts: validation, conditional fields, dependent selects, repeatable entries, runtime element changes and i18n.",
+  "version": "0.7.0",
+  "description": "Schema-driven React forms and layouts with their own components and stylesheet (no Bootstrap needed): validation, conditional fields, dependent selects, repeatable entries, tables, charts, calendar, tree, uploads, runtime element changes and i18n.",
   "keywords": [
     "react",
-    "react-bootstrap",
-    "bootstrap",
     "form",
     "schema",
     "form-builder",
     "validation",
     "i18n",
-    "nextjs"
+    "nextjs",
+    "liferay",
+    "datatable"
   ],
   "license": "MIT",
   "author": "Riyaz Hameed <riyaz.mohamed@gmail.com>",
@@ -31,6 +31,7 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./styles.css": "./dist/styles.css",
     "./lang/*": {
       "import": "./dist/lang/*.js",
       "require": "./dist/lang/*.cjs"
@@ -41,23 +42,23 @@
     "dist",
     "README.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "prepublishOnly": "npm run build"
+    "build": "node scripts/build-styles.mjs && tsup",
+    "dev": "node scripts/build-styles.mjs && tsup --watch",
+    "styles": "node scripts/build-styles.mjs",
+    "prepublishOnly": "npm run build",
+    "test": "node scripts/smoke.mjs"
   },
   "peerDependencies": {
-    "bootstrap": ">=5.3",
     "react": ">=18",
-    "react-bootstrap": ">=2.10",
     "react-dom": ">=18"
   },
   "devDependencies": {
-    "bootstrap": "5.3.3",
     "jsdom": "^25.0.1",
     "react": "18.3.1",
-    "react-bootstrap": "2.10.10",
     "react-dom": "18.3.1",
     "tsup": "^8.3.5",
     "typescript": "^5.9.3"

@@ -235,6 +235,11 @@ const messages = {
     // Spinner (screen-reader text)
     loading: "Loading...",
   },
+  carousel: {
+    // Carousel arrows (screen-reader labels)
+    previous: "Previous",
+    next: "Next",
+  },
 
   layout: {
     // Shown in place of a schema node whose type isn't in the component registry

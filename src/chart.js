@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "react-bootstrap";
+import { Button } from "./ui";
 import { useTranslator } from "./i18n";
 import { formatValue, matchesRule } from "./table";
 
@@ -35,22 +35,22 @@ const CHART_CSS = `
 [data-bs-theme=dark] .rcube-chart{${CHART_COLORS_DARK.map((c, i) => `--rc-s${i + 1}:${c};`).join('')}}
 .rcube-chart svg{display:block;overflow:visible;touch-action:pan-y}
 .rcube-chart svg:focus{outline:none}
-.rcube-chart svg:focus-visible{outline:2px solid var(--bs-primary);outline-offset:4px;border-radius:4px}
-.rcube-chart .rc-legend-item{background:none;border:0;padding:2px 6px;border-radius:4px;color:var(--bs-secondary-color);font-size:.8125rem;display:inline-flex;align-items:center;gap:6px}
-.rcube-chart .rc-legend-item:hover{background:var(--bs-tertiary-bg)}
+.rcube-chart svg:focus-visible{outline:2px solid var(--rc-primary);outline-offset:4px;border-radius:4px}
+.rcube-chart .rc-legend-item{background:none;border:0;padding:2px 6px;border-radius:4px;color:var(--rc-secondary-color);font-size:.8125rem;display:inline-flex;align-items:center;gap:6px}
+.rcube-chart .rc-legend-item:hover{background:var(--rc-tertiary-bg)}
 .rcube-chart .rc-legend-item[aria-pressed=false]{opacity:.45;text-decoration:line-through}
-.rcube-chart .rc-tooltip{position:absolute;pointer-events:none;z-index:5;min-width:120px;padding:6px 10px;font-size:.8125rem;
-  background:var(--bs-body-bg);color:var(--bs-body-color);border:1px solid var(--bs-border-color-translucent);border-radius:6px;
+.rcube-chart .rc-chart-tip{position:absolute;pointer-events:none;z-index:5;min-width:120px;padding:6px 10px;font-size:.8125rem;
+  background:var(--rc-body-bg);color:var(--rc-body-color);border:1px solid var(--rc-border-color-translucent);border-radius:6px;
   box-shadow:0 4px 12px rgba(0,0,0,.12);white-space:nowrap}
-.rcube-chart .rc-tooltip-row{display:flex;align-items:center;gap:8px;line-height:1.5}
-.rcube-chart .rc-tooltip-row .rc-name{color:var(--bs-secondary-color)}
+.rcube-chart .rc-chart-tip-row{display:flex;align-items:center;gap:8px;line-height:1.5}
+.rcube-chart .rc-chart-tip-row .rc-name{color:var(--rc-secondary-color)}
 `;
 
-const INK = 'var(--bs-body-color)';
-const MUTED = 'var(--bs-secondary-color)';
-const GRID = 'var(--bs-border-color-translucent)';
-const AXIS = 'var(--bs-border-color)';
-const SURFACE = 'var(--bs-body-bg)';
+const INK = 'var(--rc-body-color)';
+const MUTED = 'var(--rc-secondary-color)';
+const GRID = 'var(--rc-border-color-translucent)';
+const AXIS = 'var(--rc-border-color)';
+const SURFACE = 'var(--rc-body-bg)';
 
 // ---------------------------------------------------------------- helpers
 
@@ -325,7 +325,7 @@ export const Chart = ({
     : seriesList.map((s) => ({ key: s.key, name: s.name, color: s.color, line: !isScatter && s.kind === 'line', dot: isScatter }));
   const showLegend = legend !== false && (isPie || seriesList.length > 1);
   const legendView = showLegend && (
-    <div className={`d-flex flex-wrap gap-1 ${legend === 'bottom' ? 'mt-2' : 'mb-2'}`} role="group" aria-label={title ? `${title} legend` : 'Legend'}>
+    <div className={`rc-d-flex rc-flex-wrap rc-gap-1 ${legend === 'bottom' ? 'rc-mt-2' : 'rc-mb-2'}`} role="group" aria-label={title ? `${title} legend` : 'Legend'}>
       {legendItems.map((item) => (
         <button key={item.key} type="button" className="rc-legend-item" aria-pressed={!hidden.has(item.key)}
           onClick={() => toggleHidden(item.key)} disabled={!legendToggle && !onLegendClick}>
@@ -343,12 +343,12 @@ export const Chart = ({
     if (!tooltip || !h) return null;
     const flip = h.x + 220 > width;
     return (
-      <div className="rc-tooltip" role="status" style={{
+      <div className="rc-chart-tip" role="status" style={{
         left: flip ? h.x - 14 : h.x + 14, top: Math.max(0, h.y - 12), transform: flip ? 'translateX(-100%)' : undefined,
       }}>
-        {header !== undefined && header !== null && <div className="fw-semibold mb-1">{String(header)}</div>}
+        {header !== undefined && header !== null && <div className="rc-fw-semibold rc-mb-1">{String(header)}</div>}
         {rows.map((row) => (
-          <div key={row.key} className="rc-tooltip-row" style={row.active ? { fontWeight: 600 } : undefined}>
+          <div key={row.key} className="rc-chart-tip-row" style={row.active ? { fontWeight: 600 } : undefined}>
             {row.color && <Key color={row.color} line />}
             <strong>{row.value}</strong>
             <span className="rc-name">{row.name}</span>
@@ -512,7 +512,7 @@ export const Chart = ({
       pieces.push(
         <g key={`band${k}`}>
           <rect x={x0} y={y0} width={vertical ? pw : Math.abs(z - a)} height={vertical ? Math.abs(z - a) : ph}
-            style={{ fill: b.color || 'var(--bs-secondary-color)', opacity: b.opacity ?? 0.08 }} />
+            style={{ fill: b.color || 'var(--rc-secondary-color)', opacity: b.opacity ?? 0.08 }} />
           {b.label && (
             <text x={vertical ? left + 6 : x0 + 4} y={vertical ? y0 + 14 : top - 4} fontSize="11" fill={MUTED}>{b.label}</text>
           )}
@@ -817,27 +817,27 @@ export const Chart = ({
 
   // ---------------------------------------------------------------- table view
   const tableView = showTable && (
-    <div className="table-responsive">
-      <table className="table table-sm mb-0">
-        {title && <caption className="caption-top">{title}</caption>}
+    <div className="rc-table-responsive">
+      <table className="rc-table rc-table-sm rc-mb-0">
+        {title && <caption className="rc-caption-top">{title}</caption>}
         <thead>
           {isPie ? (
-            <tr><th scope="col">{t('chart.category')}</th><th scope="col" className="text-end">{pieSeries?.name}</th></tr>
+            <tr><th scope="col">{t('chart.category')}</th><th scope="col" className="rc-text-end">{pieSeries?.name}</th></tr>
           ) : isScatter ? (
-            <tr><th scope="col" /><th scope="col" className="text-end">{xAxis.title || 'x'}</th><th scope="col" className="text-end">{yAxis.title || 'y'}</th></tr>
+            <tr><th scope="col" /><th scope="col" className="rc-text-end">{xAxis.title || 'x'}</th><th scope="col" className="rc-text-end">{yAxis.title || 'y'}</th></tr>
           ) : (
-            <tr><th scope="col">{xAxis.title || t('chart.category')}</th>{seriesList.map((s) => <th key={s.key} scope="col" className="text-end">{s.name}</th>)}</tr>
+            <tr><th scope="col">{xAxis.title || t('chart.category')}</th>{seriesList.map((s) => <th key={s.key} scope="col" className="rc-text-end">{s.name}</th>)}</tr>
           )}
         </thead>
         <tbody style={{ fontVariantNumeric: 'tabular-nums' }}>
           {isPie && pieLabels.map((label, i) => (
-            <tr key={label}><td>{label}</td><td className="text-end">{fmt(valueOf(pieSeries?.data?.[i]))}</td></tr>
+            <tr key={label}><td>{label}</td><td className="rc-text-end">{fmt(valueOf(pieSeries?.data?.[i]))}</td></tr>
           ))}
           {isScatter && seriesList.flatMap((s) => (s.data || []).map((p, i) => (
-            <tr key={`${s.key}-${i}`}><td>{p?.label ?? s.name}</td><td className="text-end">{fmt(num(p?.x))}</td><td className="text-end">{fmt(num(p?.y))}</td></tr>
+            <tr key={`${s.key}-${i}`}><td>{p?.label ?? s.name}</td><td className="rc-text-end">{fmt(num(p?.x))}</td><td className="rc-text-end">{fmt(num(p?.y))}</td></tr>
           )))}
           {!isPie && !isScatter && Array.from({ length: count }, (_, i) => (
-            <tr key={i}><td>{labels[i] ?? i + 1}</td>{seriesList.map((s) => <td key={s.key} className="text-end">{fmt(valueOf(s.data?.[i]))}</td>)}</tr>
+            <tr key={i}><td>{labels[i] ?? i + 1}</td>{seriesList.map((s) => <td key={s.key} className="rc-text-end">{fmt(valueOf(s.data?.[i]))}</td>)}</tr>
           ))}
         </tbody>
       </table>
@@ -845,13 +845,13 @@ export const Chart = ({
   );
 
   return (
-    <div ref={wrapRef} data-rcube-chart={nodeId} className={`rcube-chart mb-3 ${className}`.trim()} style={style}>
+    <div ref={wrapRef} data-rcube-chart={nodeId} className={`rcube-chart rc-mb-3 ${className}`.trim()} style={style}>
       <style>{CHART_CSS}</style>
       {(title || subtitle || tableToggle) && (
-        <div className="d-flex align-items-start gap-2 mb-2">
-          <div className="me-auto">
-            {title && <h6 className="mb-0">{title}</h6>}
-            {subtitle && <div className="small" style={{ color: MUTED }}>{subtitle}</div>}
+        <div className="rc-d-flex rc-align-items-start rc-gap-2 rc-mb-2">
+          <div className="rc-me-auto">
+            {title && <h6 className="rc-mb-0">{title}</h6>}
+            {subtitle && <div className="rc-small" style={{ color: MUTED }}>{subtitle}</div>}
           </div>
           {tableToggle && (
             <Button size="sm" variant="outline-secondary" onClick={() => setShowTable((v) => !v)} aria-pressed={showTable}>
@@ -862,7 +862,7 @@ export const Chart = ({
       )}
       {legend !== 'bottom' && !showTable && legendView}
       {showTable ? tableView : empty ? (
-        <div className="d-flex align-items-center justify-content-center text-muted small" style={{ height }}>{emptyText || t('chart.empty')}</div>
+        <div className="rc-d-flex rc-align-items-center rc-justify-content-center rc-text-muted rc-small" style={{ height }}>{emptyText || t('chart.empty')}</div>
       ) : (
         <div style={{ position: 'relative' }}>
           <svg ref={svgRef} width={width} height={height} role="img" tabIndex={0}
