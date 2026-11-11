@@ -148,12 +148,34 @@ export const RichTextField = forwardRef(function RichTextField({
     return () => el.removeEventListener('rcube:valueset', onSet);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Focus the editor; with no cursor in it, the cursor goes to the end (so inserts don't land at the start)
+  const caret = () => {
+    const el = box.current;
+    if (!el) return;
+    // where the cursor is before focusing (focusing puts it at the start)
+    const sel = window.getSelection();
+    const inside = Boolean(sel?.rangeCount && el.contains(sel.anchorNode));
+    el.focus();
+    if (sel && !inside) {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      r.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+    return inside;
+  };
   // The editor handle given to your tools' actions
   const editor = {
     getHtml: () => store.current?.value || '',
     setHtml: (html) => { show(clean(html)); sync(); },
-    insertHtml: (html) => { box.current?.focus(); document.execCommand('insertHTML', false, clean(html)); sync(); },
-    insertText: (text) => { box.current?.focus(); document.execCommand('insertText', false, String(text ?? '')); sync(); },
+    // at the cursor; with no cursor in the editor: its own block at the end
+    insertHtml: (html) => {
+      if (caret()) document.execCommand('insertHTML', false, clean(html));
+      else if (box.current) { box.current.insertAdjacentHTML('beforeend', clean(html)); caret(); }
+      sync();
+    },
+    insertText: (text) => { caret(); document.execCommand('insertText', false, String(text ?? '')); sync(); },
     focus: () => box.current?.focus(),
   };
 

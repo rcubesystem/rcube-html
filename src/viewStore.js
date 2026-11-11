@@ -8,28 +8,30 @@
  *   clearView("students") -> drops it and "students:…" (e.g. its filters)     hasView("students") -> saved anything?
  *   clearAllViews()       -> every saved choice of this person (all schools)  purgeExpiredViews() -> dropped count
  *
- * Keys: "rcube.view.<namespace>.<key>" -> { v: value, at: last used (ms) }. Nothing is saved while disabled (or
+ * Keys: "<prefix><namespace>.<key>" -> { v: value, at: last used (ms) }; prefix default "rcube.view." (an app sets its own,
+ * e.g. "rcube_school.views.", so its keys sit with the app's other keys and go when the app clears them). Nothing is saved while disabled (or
  * without a namespace: nobody signed in). A DataTable saves its own view with the schema prop `remember`.
  * Changes are announced on window ("rcube:viewstore") so tables can show / hide their Reset button.
  */
 const PREFIX = 'rcube.view.';
 const EVENT = 'rcube:viewstore';
-const state = { namespace: '', user: '', enabled: true, days: 7 };
+const state = { prefix: PREFIX, namespace: '', user: '', enabled: true, days: 7 };
 
 const storage = () => {
   try { return typeof window !== 'undefined' ? window.localStorage : null; } catch { return null; }
 };
 // after the current work (never while a component renders: listeners update their state)
 const announce = (key) => { try { setTimeout(() => window.dispatchEvent(new CustomEvent(EVENT, { detail: { key } })), 0); } catch { /* no window */ } };
-const full = (key) => `${PREFIX}${state.namespace}.${key}`;
+const full = (key) => `${state.prefix}${state.namespace}.${key}`;
 const expired = (entry, now = Date.now()) => !entry || typeof entry.at !== 'number' || now - entry.at > state.days * 86400000;
 const parse = (text) => { try { return JSON.parse(text); } catch { return null; } };
 
 export const VIEW_STORE_EVENT = EVENT;
 
 /** Who's signed in and how long choices are kept; enabled: false stops saving (what's saved stays until cleared) */
-export const configureViewStore = ({ namespace, user, enabled, days } = {}) => {
+export const configureViewStore = ({ prefix, namespace, user, enabled, days } = {}) => {
   const before = JSON.stringify(state);
+  if (prefix !== undefined) state.prefix = String(prefix || PREFIX);
   if (namespace !== undefined) state.namespace = String(namespace || '');
   if (user !== undefined) state.user = String(user || '');
   if (enabled !== undefined) state.enabled = enabled !== false;
@@ -84,7 +86,7 @@ export const hasView = (key) => {
 export const clearAllViews = ({ all = false } = {}) => {
   const s = storage();
   if (!s) return 0;
-  const prefix = all || !state.user ? PREFIX : `${PREFIX}${state.user}.`;
+  const prefix = all || !state.user ? state.prefix : `${state.prefix}${state.user}.`;
   const keys = keysOf(prefix);
   for (const k of keys) s.removeItem(k);
   announce('*');
@@ -96,6 +98,6 @@ export const purgeExpiredViews = () => {
   if (!s) return 0;
   const now = Date.now();
   let n = 0;
-  for (const k of keysOf(PREFIX)) if (expired(parse(s.getItem(k)), now)) { s.removeItem(k); n += 1; }
+  for (const k of keysOf(state.prefix)) if (expired(parse(s.getItem(k)), now)) { s.removeItem(k); n += 1; }
   return n;
 };
