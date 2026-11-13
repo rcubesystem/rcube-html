@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
  * rcube-html's own building blocks: buttons, form controls, modal, dropdown, table, pager, badge, card, spinner,
  * progress bar and the overlay used by Tooltip / Popover. They take the same props the library used from
  * react-bootstrap (variant, size, isInvalid, ...) but render rc-* classes styled by rcube-html's own stylesheet
- * (styles.css), so rcube-html runs without Bootstrap — in a Bootstrap app, inside Liferay (Clay), or on a bare page.
+ * (styles.css), so rcube-html runs without Bootstrap — in a Bootstrap app, inside a CMS, or on a bare page.
  *
  * Colours, radius and fonts come from --rc-* CSS variables; each one falls back to Bootstrap's --bs-* variable
  * when Bootstrap is on the page, and to Bootstrap 5's own value when it isn't.

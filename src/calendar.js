@@ -1,10 +1,11 @@
+import { registerComponent } from "./html";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonGroup, Form, Modal, Spinner } from "./ui";
 import { useTranslator } from "./i18n";
 import { toolbarButtons } from "./toolbar";
-import { CHART_COLORS } from "./chart";
+import { CHART_COLORS } from "./palette";
 import {
-  CALENDAR_VIEWS, addDays, addMinutes, dayKey, diffDays, expandEvents, minutesOfDay, normalizeEvent,
+  CALENDAR_VIEWS, addDays, addMinutes, addMonths, dayKey, diffDays, expandEvents, minutesOfDay, normalizeEvent,
   parseDate, publicEvent, rangeOf, sameDay, shiftDate, startOfDay, startOfMonth, startOfWeek, toLocalString,
 } from "./calendarUtils";
 
@@ -223,6 +224,9 @@ export const Calendar = ({
   slotMinutes = 30, snapMinutes = 15, defaultDuration = 60, workingHours, nowIndicator = true, agendaDays = 30,
   locale, hour12,
   sidebar = true, searchable = true, editable = true, selectable = true, eventEditor = true, autoUpdate = true,
+  // repeatable: the event editor's Repeat section (daily / weekly on chosen days / monthly / yearly, every N, ending never /
+  // on a date / after N times); false hides it
+  repeatable = true,
   // sidebarOpen: true / false shows / hides the left panel; unset: shown on large screens (lg and up), hidden on small
   // ones. sidebarToggle: the hamburger button before "Today" that shows / hides it (onSidebarToggle({ open })).
   sidebarOpen: sidebarOpenProp, sidebarToggle = true,
@@ -270,6 +274,7 @@ export const Calendar = ({
       hour: f({ hour: 'numeric', hour12 }),
       weekdayShort: f({ weekday: 'short' }),
       weekdayNarrow: f({ weekday: 'narrow' }),
+      weekdayLong: f({ weekday: 'long' }),
       monthYear: f({ month: 'long', year: 'numeric' }),
       monthShortDay: f({ month: 'short', day: 'numeric' }),
       shortDate: f({ month: 'short', day: 'numeric', year: 'numeric' }),
@@ -382,11 +387,35 @@ export const Calendar = ({
   };
 
   const firstCalendar = calendars.find((c) => !hiddenCalendars.includes(String(c.id)))?.id ?? calendars[0]?.id;
-  const draftFrom = (start, end, allDay, extra = {}) => ({
+  // recurrence -> the editor's Repeat settings (none: "doesn't repeat")
+  const repeatDraft = (recurrence, start) => ({
+    repeatFreq: recurrence?.freq || (recurrence ? 'weekly' : ''),
+    repeatInterval: String(recurrence?.interval || 1),
+    repeatDays: Array.isArray(recurrence?.byDay) && recurrence.byDay.length ? recurrence.byDay.map(Number) : [start.getDay()],
+    repeatEnds: recurrence?.until ? 'until' : recurrence?.count ? 'count' : 'never',
+    repeatUntil: recurrence?.until ? String(recurrence.until).slice(0, 10) : dayKey(addMonths(start, 3)),
+    repeatCount: String(recurrence?.count || 10),
+  });
+  // the editor's Repeat settings -> recurrence (null: doesn't repeat); exceptions (removed occurrences) are kept
+  const recurrenceOf = (draft, previous) => {
+    if (!draft.repeatFreq) return null;
+    const interval = Math.max(1, Math.min(99, parseInt(draft.repeatInterval, 10) || 1));
+    const count = Math.max(1, Math.min(999, parseInt(draft.repeatCount, 10) || 1));
+    return {
+      freq: draft.repeatFreq,
+      ...(interval > 1 && { interval }),
+      ...(draft.repeatFreq === 'weekly' && draft.repeatDays.length && { byDay: [...draft.repeatDays].sort((a, b) => a - b) }),
+      ...(draft.repeatEnds === 'until' && draft.repeatUntil && { until: draft.repeatUntil }),
+      ...(draft.repeatEnds === 'count' && { count }),
+      ...(previous?.exceptions?.length && { exceptions: previous.exceptions }),
+    };
+  };
+  const draftFrom = (start, end, allDay, extra = {}, recurrence = null) => ({
     title: '', location: '', description: '', calendar: firstCalendar ?? '', ...extra,
     allDay,
     startDate: dayKey(start), startTime: toLocalString(start).slice(11) || '09:00',
     endDate: dayKey(allDay ? addDays(end, -1) : end), endTime: toLocalString(end).slice(11) || '10:00',
+    ...repeatDraft(recurrence, start),
   });
   const openCreate = (start, end, allDay) => {
     if (!editable || !eventEditor) return;
@@ -401,7 +430,7 @@ export const Calendar = ({
       mode: 'edit', id: series.id, recurring: Boolean(series.recurrence),
       draft: draftFrom(series._start, series._end, series.allDay, {
         title: series.title ?? '', location: series.location ?? '', description: series.description ?? '', calendar: series.calendar ?? '',
-      }),
+      }, series.recurrence || null),
     });
   };
   // scope "one" removes a single occurrence of a repeating event (added to its recurrence.exceptions)
@@ -430,14 +459,17 @@ export const Calendar = ({
       location: draft.location.trim(), description: draft.description.trim(),
     }).filter(([, v]) => v !== '' && v !== undefined));
     if (mode === 'create') {
-      const event = { id: `n${Date.now().toString(36)}`, ...fields, start, end };
+      const recurrence = recurrenceOf(draft);
+      const event = { id: `n${Date.now().toString(36)}`, ...fields, start, end, ...(recurrence && { recurrence }) };
       writeEvents([...rawEvents, event]);
       onEventCreate?.({ calendar: nodeId, event });
     } else {
       const index = rawIndex(id);
       const previous = rawEvents[index];
-      if (recurring) { start = previous.start; end = previous.end; } // a series keeps its schedule
+      // a repeating event: start / end are its first occurrence; the Repeat settings are its schedule
+      const recurrence = recurrenceOf(draft, previous.recurrence);
       const event = { ...previous, ...fields, start, end };
+      if (recurrence) event.recurrence = recurrence; else delete event.recurrence;
       ['location', 'description'].forEach((key) => { if (!(key in fields)) delete event[key]; });
       writeEvents(rawEvents.map((raw, i) => (i === index ? event : raw)));
       onEventUpdate?.({ calendar: nodeId, event, previous, change: 'edit' });
@@ -944,28 +976,85 @@ export const Calendar = ({
         <Modal.Body>
           <Form.Control autoFocus size="lg" className="rc-mb-3" placeholder={t('calendar.titlePlaceholder')} aria-label={t('calendar.title')}
             value={editor.draft.title} onChange={(e) => setDraft({ title: e.target.value })} />
-          <Form.Check type="switch" id={`${nodeId}-allday`} className="rc-mb-2" label={t('calendar.allDay')} disabled={editor.recurring}
+          <Form.Check type="switch" id={`${nodeId}-allday`} className="rc-mb-2" label={t('calendar.allDay')}
             checked={editor.draft.allDay} onChange={(e) => setDraft({ allDay: e.target.checked })} />
           <div className="rc-row rc-g-2 rc-mb-3">
             <div className="rc-col-6">
               <Form.Label className="rc-small rc-mb-1">{t('calendar.start')}</Form.Label>
-              <Form.Control type="date" size="sm" disabled={editor.recurring} value={editor.draft.startDate}
+              <Form.Control type="date" size="sm" value={editor.draft.startDate}
                 onChange={(e) => setDraft({ startDate: e.target.value, ...(e.target.value > editor.draft.endDate && { endDate: e.target.value }) })} />
               {!editor.draft.allDay && (
-                <Form.Control type="time" size="sm" className="rc-mt-1" disabled={editor.recurring} aria-label={t('calendar.startTime')}
+                <Form.Control type="time" size="sm" className="rc-mt-1" aria-label={t('calendar.startTime')}
                   value={editor.draft.startTime} onChange={(e) => setDraft({ startTime: e.target.value })} />
               )}
             </div>
             <div className="rc-col-6">
               <Form.Label className="rc-small rc-mb-1">{t('calendar.end')}</Form.Label>
-              <Form.Control type="date" size="sm" disabled={editor.recurring} value={editor.draft.endDate}
+              <Form.Control type="date" size="sm" value={editor.draft.endDate}
                 onChange={(e) => setDraft({ endDate: e.target.value })} />
               {!editor.draft.allDay && (
-                <Form.Control type="time" size="sm" className="rc-mt-1" disabled={editor.recurring} aria-label={t('calendar.endTime')}
+                <Form.Control type="time" size="sm" className="rc-mt-1" aria-label={t('calendar.endTime')}
                   value={editor.draft.endTime} onChange={(e) => setDraft({ endTime: e.target.value })} />
               )}
             </div>
           </div>
+          {repeatable && (
+            <div className="rc-border rc-rounded rc-p-2 rc-mb-3">
+              <div className="rc-row rc-g-2 rc-align-items-end">
+                <div className="rc-col-12 rc-col-sm-7">
+                  <Form.Label className="rc-small rc-mb-1" htmlFor={`${nodeId}-repeat`}>{t('calendar.repeatLabel')}</Form.Label>
+                  <Form.Select id={`${nodeId}-repeat`} size="sm" value={editor.draft.repeatFreq} onChange={(e) => setDraft({ repeatFreq: e.target.value })}>
+                    {['', 'daily', 'weekly', 'monthly', 'yearly'].map((f) => <option key={f} value={f}>{t(`calendar.repeatFreq.${f || 'none'}`)}</option>)}
+                  </Form.Select>
+                </div>
+                {editor.draft.repeatFreq && (
+                  <div className="rc-col-12 rc-col-sm-5">
+                    <Form.Label className="rc-small rc-mb-1" htmlFor={`${nodeId}-every`}>{t(`calendar.repeatEvery.${editor.draft.repeatFreq}`)}</Form.Label>
+                    <Form.Control id={`${nodeId}-every`} type="number" size="sm" min={1} max={99} value={editor.draft.repeatInterval}
+                      onChange={(e) => setDraft({ repeatInterval: e.target.value })} />
+                  </div>
+                )}
+              </div>
+              {editor.draft.repeatFreq === 'weekly' && (
+                <div className="rc-mt-2" role="group" aria-label={t('calendar.repeatOn')}>
+                  <div className="rc-small rc-mb-1">{t('calendar.repeatOn')}</div>
+                  <div className="rc-d-flex rc-flex-wrap rc-gap-1">
+                    {[0, 1, 2, 3, 4, 5, 6].map((i) => (firstDay + i) % 7).map((day) => {
+                      const on = editor.draft.repeatDays.includes(day);
+                      return (
+                        <Button key={day} size="sm" variant={on ? 'primary' : 'outline-secondary'} aria-pressed={on}
+                          title={fmt.weekdayLong.format(new Date(2026, 0, 4 + day))}
+                          onClick={() => setDraft({ repeatDays: on ? editor.draft.repeatDays.filter((d) => d !== day) : [...editor.draft.repeatDays, day] })}>
+                          {fmt.weekdayShort.format(new Date(2026, 0, 4 + day))}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              {editor.draft.repeatFreq && (
+                <div className="rc-mt-2">
+                  <div className="rc-small rc-mb-1">{t('calendar.repeatEnds')}</div>
+                  <div className="rc-d-flex rc-flex-wrap rc-align-items-center rc-gap-2">
+                    <Form.Check type="radio" inline id={`${nodeId}-ends-never`} name={`${nodeId}-ends`} label={t('calendar.repeatNever')}
+                      checked={editor.draft.repeatEnds === 'never'} onChange={() => setDraft({ repeatEnds: 'never' })} />
+                    <Form.Check type="radio" inline id={`${nodeId}-ends-until`} name={`${nodeId}-ends`} label={t('calendar.repeatOnDate')}
+                      checked={editor.draft.repeatEnds === 'until'} onChange={() => setDraft({ repeatEnds: 'until' })} />
+                    {editor.draft.repeatEnds === 'until' && (
+                      <Form.Control type="date" size="sm" style={{ width: 'auto' }} aria-label={t('calendar.repeatOnDate')} min={editor.draft.startDate}
+                        value={editor.draft.repeatUntil} onChange={(e) => setDraft({ repeatUntil: e.target.value })} />
+                    )}
+                    <Form.Check type="radio" inline id={`${nodeId}-ends-count`} name={`${nodeId}-ends`} label={t('calendar.repeatAfter')}
+                      checked={editor.draft.repeatEnds === 'count'} onChange={() => setDraft({ repeatEnds: 'count' })} />
+                    {editor.draft.repeatEnds === 'count' && (
+                      <Form.Control type="number" size="sm" min={1} max={999} style={{ width: '6rem' }} aria-label={t('calendar.repeatTimes')}
+                        value={editor.draft.repeatCount} onChange={(e) => setDraft({ repeatCount: e.target.value })} />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           {editor.recurring && <div className="rc-small rc-text-muted rc-mb-2">{t('calendar.seriesNote')}</div>}
           {calendars.length > 0 && (
             <Form.Group className="rc-mb-2">
@@ -1073,3 +1162,6 @@ export const Calendar = ({
     </div>
   );
 };
+
+// Schemas use it by name (registered when this module loads: 'rcube-html', or 'rcube-html/calendar' with 'rcube-html/core')
+registerComponent('Calendar', Calendar);

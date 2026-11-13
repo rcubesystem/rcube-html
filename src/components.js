@@ -1,3 +1,4 @@
+import { asList, childrenOf } from "./schema";
 import { useEffect, useRef, useState } from "react";
 import {
   Badge as UiBadge, Card as UiCard, CloseButton, Overlay, ProgressBar as UiProgressBar, Spinner as UiSpinner, cx, modalDialogClass, useModalBehavior,
@@ -5,7 +6,7 @@ import {
 import { useTranslator } from "./i18n";
 
 /*
- * Components for schemas (rcube-html's own, styled by its stylesheet: no Bootstrap needed).
+ * Components for schemas (rcube-html's own, styled by its stylesheet: they work with any CSS framework, including Bootstrap).
  *
  * Container components render other schema nodes and receive, from LayoutParser:
  *   node        - the schema node (children / items / footer hold nested schema nodes)
@@ -212,7 +213,7 @@ export const Modal = ({ nodeId, node, renderNodes, actions, show = false, title,
               </div>
             )}
             <div className="rc-modal-body">{renderNodes(node?.children)}</div>
-            {node?.footer?.length > 0 && <div className="rc-modal-footer">{renderNodes(node.footer)}</div>}
+            {asList(node?.footer).length > 0 && <div className="rc-modal-footer">{renderNodes(node.footer)}</div>}
           </div>
         </div>
       </div>
@@ -289,7 +290,7 @@ export const Carousel = ({ nodeId, items = [], renderNodes, interval = 5000, con
  * Use "wrapperClassName": "rc-d-block" to wrap a full-width field.
  */
 export const Tooltip = ({ nodeId, node, renderNodes, text, placement = 'top', label, wrapperClassName = 'rc-d-inline-block' }) => {
-  const hasChildren = node?.children?.length > 0;
+  const hasChildren = childrenOf(node).length > 0;
   return (
     <Overlay id={`${nodeId}-tooltip`} kind="tooltip" placement={placement} trigger="hover" wrapperClassName={wrapperClassName}
       tabIndex={hasChildren ? undefined : 0} render={() => <div className="rc-tooltip-inner">{text}</div>}>
@@ -304,7 +305,7 @@ export const Tooltip = ({ nodeId, node, renderNodes, text, placement = 'top', la
  *   "trigger": "click" | "hover" | "focus", "wrapperClassName": "rc-d-inline-block" }, "children": [ ...nodes... ] }
  */
 export const Popover = ({ nodeId, node, renderNodes, title, text, placement = 'right', trigger = 'click', label, wrapperClassName = 'rc-d-inline-block' }) => {
-  const hasChildren = node?.children?.length > 0;
+  const hasChildren = childrenOf(node).length > 0;
   return (
     <Overlay id={`${nodeId}-popover`} kind="popover" placement={placement} trigger={trigger} wrapperClassName={wrapperClassName}
       tabIndex={hasChildren ? undefined : 0}

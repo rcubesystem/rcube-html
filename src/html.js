@@ -1,13 +1,8 @@
 import { InputField, TextareaField, SelectField, RadioGroupField, CheckboxGroupField, SliderField, ButtonField, isNodeVisible, getFieldValue, setFieldDomValue, resolveEventProps, FIELD_TYPES } from './form';
 import { translateProps, useTranslator } from './i18n';
 import { BUILT_IN_CONTAINERS, BUILT_IN_DISPLAY } from './components';
-import { DataTable } from './table';
-import { Chart } from './chart';
-import { Calendar } from './calendar';
-import { FileUploadField } from './upload';
-import { Tree } from './tree';
-import { RichText, RichTextField } from './richtext';
 import { Container, Row, Col, Image } from "./ui";
+import { asList, childrenOf } from "./schema";
 
 // 1. Define UI components to resolve inside the layout
 
@@ -52,22 +47,21 @@ const ComponentRegistry = {
   A, IMG, DIV, LIST,
   ...BUILT_IN_DISPLAY,    // Badge, Breadcrumb, ProgressBar, Spinner, ListGroup
   ...BUILT_IN_CONTAINERS, // Card, Accordion, Tabs, Modal, Dialog, Carousel, Tooltip, Popover, Alert
-  DataTable,
-  DynamicTable: DataTable,
-  Chart,
-  Calendar,
-  Tree,
-  RichText,
-  RichTextField,
+  // DataTable / DynamicTable, Chart, Calendar, Tree, RichText / RichTextField and FileUploadField / FileUpload register
+  // themselves when their module loads ('rcube-html' loads them all; 'rcube-html/core' none: import the ones a page uses)
   InputField,
   TextareaField,
   SelectField,
   RadioGroupField,
   CheckboxGroupField,
   SliderField,
-  FileUploadField,
-  FileUpload: FileUploadField,
   ButtonField
+};
+
+// The components that live in their own entry point, and the import that adds each
+const OWN_ENTRY = {
+  DataTable: 'table', DynamicTable: 'table', Chart: 'chart', Calendar: 'calendar', Tree: 'tree',
+  RichText: 'richtext', RichTextField: 'richtext', FileUploadField: 'upload', FileUpload: 'upload',
 };
 
 // Components built with forwardRef whose DOM node gets stored in fieldRefs (shared with form.js)
@@ -144,7 +138,7 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   if (node.type === 'row') {
     const row = (
       <Row gap={node.props?.gap} className={node.props?.className} style={node.props?.style}>
-        {node.children?.map((child) => (
+        {childrenOf(node).map((child) => (
           <LayoutParser key={child.id} node={child} {...childProps} />
         ))}
       </Row>
@@ -158,7 +152,7 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   if (node.type === 'column') {
     return (
       <Col span={node.props?.span} className={node.props?.className} style={node.props?.style}>
-        {node.children?.map((child) => (
+        {childrenOf(node).map((child) => (
           <LayoutParser key={child.id} node={child} {...childProps} />
         ))}
       </Col>
@@ -168,7 +162,9 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   const componentName = node.type === 'component' ? node.componentName : node.type;
   const ComponentToRender = ComponentRegistry[componentName];
   if (!ComponentToRender) {
-    return <div className="rc-text-danger">{t('layout.componentNotFound', { name: componentName })}</div>;
+    // a component of its own entry point that the page didn't import ('rcube-html/core' + 'rcube-html/chart', …)
+    const entry = OWN_ENTRY[componentName];
+    return <div className="rc-text-danger">{entry ? t('layout.componentNotLoaded', { name: componentName, module: `rcube-html/${entry}` }) : t('layout.componentNotFound', { name: componentName })}</div>;
   }
 
   if (RefFields.has(componentName)) {
@@ -221,7 +217,8 @@ const LayoutParser = ({ node: schemaNode, functionMap, fieldRefs, errors, onFiel
   // Containers render nested schema nodes with the same form context (fields inside keep validation,
   // values, events and translation)
   if (ContainerTypes.has(componentName)) {
-    const renderNodes = (nodes = []) => nodes.map((child) => (
+    // a list of nodes, or a single node (a single child written as an object)
+    const renderNodes = (nodes = []) => asList(nodes).map((child) => (
       <LayoutParser key={child.id} node={child} {...childProps} />
     ));
     return (

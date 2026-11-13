@@ -209,7 +209,17 @@ const messages = {
     deleteRecurring: "Delete repeating event",
     thisEvent: "This event",
     allEvents: "All events",
-    seriesNote: "Repeating event: changes apply to every occurrence; its schedule stays the same.",
+    seriesNote: "Repeating event: changes apply to every occurrence; the start and end are its first one.",
+    // The editor's Repeat section
+    repeatLabel: "Repeat",
+    repeatFreq: { none: "Doesn't repeat", daily: "Daily", weekly: "Weekly", monthly: "Monthly", yearly: "Yearly" },
+    repeatEvery: { daily: "Every … days", weekly: "Every … weeks", monthly: "Every … months", yearly: "Every … years" },
+    repeatOn: "On these days",
+    repeatEnds: "Ends",
+    repeatNever: "Never",
+    repeatOnDate: "On",
+    repeatAfter: "After",
+    repeatTimes: "Number of times",
     repeat: { daily: "Repeats daily", weekly: "Repeats weekly", monthly: "Repeats monthly", yearly: "Repeats yearly" },
   },
 
@@ -244,6 +254,8 @@ const messages = {
   layout: {
     // Shown in place of a schema node whose type isn't in the component registry
     componentNotFound: "Component \"{name}\" not found",
+    // a component with an entry point of its own that the page didn't import ({module}: e.g. rcube-html/chart)
+    componentNotLoaded: "{name} isn't loaded: add import \"{module}\" to this page",
   },
 };
 

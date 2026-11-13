@@ -1,3 +1,4 @@
+import { asList } from "./schema";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { Form, Button } from "./ui";
 import { REVEAL_EVENT } from "./components";
@@ -423,9 +424,9 @@ export const setFieldDomValue = (el, value, fieldProps = {}) => {
  * (Tabs, Accordion, Carousel) and footer (Modal).
  */
 export const childNodesOf = (node) => [
-  ...(node.children || []),
-  ...(node.items || []).flatMap((item) => item?.children || []),
-  ...(node.footer || []),
+  ...asList(node.children),
+  ...asList(node.items).flatMap((item) => asList(item?.children)),
+  ...asList(node.footer),
 ];
 
 /**
@@ -452,7 +453,7 @@ export const isNodeVisible = (condition, values = {}) => {
  * and footer are copied too.
  *   cloneSchema(schema, "__2")  ->  "firstName" becomes "firstName__2"
  */
-export const cloneSchema = (nodes = [], suffix) => nodes.map((node) => ({
+export const cloneSchema = (nodes = [], suffix) => asList(nodes).map((node) => ({
   ...node,
   id: `${node.id}${suffix}`,
   ...(node.visibleWhen && { visibleWhen: { ...node.visibleWhen, field: `${node.visibleWhen.field}${suffix}` } }),

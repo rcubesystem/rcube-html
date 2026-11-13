@@ -179,7 +179,16 @@ const messages = {
     deleteRecurring: "Eliminar evento periódico",
     thisEvent: "Este evento",
     allEvents: "Todos los eventos",
-    seriesNote: "Evento periódico: los cambios se aplican a todas las repeticiones; su horario no cambia.",
+    seriesNote: "Evento periódico: los cambios se aplican a todas las repeticiones; el inicio y el fin son los de la primera.",
+    repeatLabel: "Repetir",
+    repeatFreq: { none: "No se repite", daily: "Cada día", weekly: "Cada semana", monthly: "Cada mes", yearly: "Cada año" },
+    repeatEvery: { daily: "Cada … días", weekly: "Cada … semanas", monthly: "Cada … meses", yearly: "Cada … años" },
+    repeatOn: "Estos días",
+    repeatEnds: "Termina",
+    repeatNever: "Nunca",
+    repeatOnDate: "El",
+    repeatAfter: "Después de",
+    repeatTimes: "Número de veces",
     repeat: { daily: "Se repite cada día", weekly: "Se repite cada semana", monthly: "Se repite cada mes", yearly: "Se repite cada año" },
   },
 
@@ -207,6 +216,7 @@ const messages = {
 
   layout: {
     componentNotFound: "Componente \"{name}\" no encontrado",
+    componentNotLoaded: "{name} no está cargado: añada import \"{module}\" a esta página",
   },
 };
 

@@ -1,7 +1,9 @@
+import { registerComponent } from "./html";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "./ui";
 import { useTranslator } from "./i18n";
-import { formatValue, matchesRule } from "./table";
+import { formatValue, matchesRule } from "./tableUtils";
+import { CHART_COLORS } from "./palette";
 
 /*
  * Chart — schema-driven SVG chart (no chart library).
@@ -27,7 +29,7 @@ import { formatValue, matchesRule } from "./table";
  */
 
 // Categorical palette (fixed order; color follows the series, never its position among visible ones)
-export const CHART_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948'];
+export { CHART_COLORS } from "./palette";
 const CHART_COLORS_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
 
 const CHART_CSS = `
@@ -879,3 +881,6 @@ export const Chart = ({
     </div>
   );
 };
+
+// Schemas use it by name (registered when this module loads: 'rcube-html', or 'rcube-html/chart' with 'rcube-html/core')
+registerComponent('Chart', Chart);

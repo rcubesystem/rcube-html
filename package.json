@@ -1,17 +1,73 @@
 {
   "name": "rcube-html",
-  "version": "0.7.0",
-  "description": "Schema-driven React forms and layouts with their own components and stylesheet (no Bootstrap needed): validation, conditional fields, dependent selects, repeatable entries, tables, charts, calendar, tree, uploads, runtime element changes and i18n.",
+  "version": "0.8.0",
+  "description": "rcube-html Schema-driven form and layout engine: describe rows, columns, fields and buttons as JSON and it renders them, with validation, conditional and dependent fields, input masks, repeatable entries, runtime changes and multi-language text. Native in React; the <rcube-form> web component for Angular, Vue, plain JavaScript and server-rendered pages (JSP, PHP, .NET). Works with any CSS framework, including Bootstrap. One library for any framework or project: React, Angular, Vue, JavaScript, and Server-rendered pages (JSP, PHP, .NET)",
   "keywords": [
-    "react",
-    "form",
+    "rcube-html",
     "schema",
+    "schema-driven",
+    "json",
+    "json-forms",
+    "dynamic-forms",
+    "dynamic-form",
+    "form",
+    "forms",
     "form-builder",
-    "validation",
-    "i18n",
+    "form-generator",
+    "dynamic-content",
+    "dynamic-ui",
+    "layout",
+    "layout-engine",
+    "page-builder",
+    "low-code",
+    "ui-components",
+    "react",
     "nextjs",
-    "liferay",
-    "datatable"
+    "angular",
+    "vue",
+    "vue3",
+    "javascript",
+    "web-component",
+    "custom-element",
+    "jsp",
+    "java",
+    "ssr",
+    "server-side-rendering",
+    "php",
+    "dotnet",
+    "cms",
+    "validation",
+    "form-validation",
+    "conditional-fields",
+    "dependent-dropdown",
+    "input-mask",
+    "repeatable-fields",
+    "i18n",
+    "multi-language",
+    "datatable",
+    "data-table",
+    "table",
+    "chart",
+    "charts",
+    "calendar",
+    "event-calendar",
+    "recurring-events",
+    "scheduler",
+    "tree",
+    "tree-view",
+    "file-explorer",
+    "file-upload",
+    "rich-text-editor",
+    "wysiwyg",
+    "modal",
+    "tabs",
+    "accordion",
+    "bootstrap",
+    "tailwind",
+    "responsive",
+    "simple-application",
+    "sample-application",
+    "starter"
   ],
   "license": "MIT",
   "author": "Riyaz Hameed <riyaz.mohamed@gmail.com>",
@@ -31,8 +87,80 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./core": {
+      "import": "./dist/core.js",
+      "require": "./dist/core.cjs"
+    },
+    "./table": {
+      "import": "./dist/table.js",
+      "require": "./dist/table.cjs"
+    },
+    "./chart": {
+      "import": "./dist/chart.js",
+      "require": "./dist/chart.cjs"
+    },
+    "./calendar": {
+      "import": "./dist/calendar.js",
+      "require": "./dist/calendar.cjs"
+    },
+    "./tree": {
+      "import": "./dist/tree.js",
+      "require": "./dist/tree.cjs"
+    },
+    "./richtext": {
+      "import": "./dist/richtext.js",
+      "require": "./dist/richtext.cjs"
+    },
+    "./upload": {
+      "import": "./dist/upload.js",
+      "require": "./dist/upload.cjs"
+    },
+    "./server": {
+      "types": "./types/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    },
+    "./element": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/index.js"
+    },
+    "./element/core": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/core.js"
+    },
+    "./element/table": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/table.js"
+    },
+    "./element/chart": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/chart.js"
+    },
+    "./element/calendar": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/calendar.js"
+    },
+    "./element/tree": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/tree.js"
+    },
+    "./element/richtext": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/richtext.js"
+    },
+    "./element/upload": {
+      "types": "./types/element.d.ts",
+      "default": "./dist/element/upload.js"
+    },
+    "./vue": {
+      "types": "./types/vue.d.ts",
+      "default": "./dist/element/vue.js"
+    },
+    "./browser/*": "./dist/browser/*",
+    "./integrations/*": "./integrations/*",
     "./styles.css": "./dist/styles.css",
     "./lang/*": {
+      "types": "./types/lang.d.ts",
       "import": "./dist/lang/*.js",
       "require": "./dist/lang/*.cjs"
     },
@@ -40,27 +168,45 @@
   },
   "files": [
     "dist",
+    "types",
+    "integrations",
     "README.md"
   ],
   "sideEffects": [
-    "*.css"
+    "*.css",
+    "./dist/**/*.js",
+    "./dist/**/*.cjs",
+    "./src/**/*.js"
   ],
   "scripts": {
-    "build": "node scripts/build-styles.mjs && tsup",
+    "build": "node scripts/build-styles.mjs && tsup && tsup --config tsup.element.config.js",
     "dev": "node scripts/build-styles.mjs && tsup --watch",
     "styles": "node scripts/build-styles.mjs",
     "prepublishOnly": "npm run build",
-    "test": "node scripts/smoke.mjs"
+    "test": "node scripts/smoke.mjs && node scripts/features.mjs && node scripts/element.mjs"
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "vue": ">=3.2"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "tsup": "^8.3.5",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vue": "^3.5.45"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    }
   }
 }

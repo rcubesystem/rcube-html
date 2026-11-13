@@ -1,4 +1,6 @@
+import { registerComponent } from "./html";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { formatValue, matchesRule, toDate } from "./tableUtils";
 import { Badge as BsBadge, Button, Card as BsCard, Dropdown, Form, Pagination, Spinner, Table } from "./ui";
 import { InputField, SelectField, runAction } from "./form";
 import { useTranslator } from "./i18n";
@@ -52,29 +54,6 @@ const BREAKPOINTS = ['sm', 'md', 'lg', 'xl', 'xxl'];
 const alignClass = { start: 'rc-text-start', center: 'rc-text-center', end: 'rc-text-end' };
 
 // "YYYY-MM-DD" as a local date (avoids the UTC shift of new Date("YYYY-MM-DD"))
-const toDate = (value) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
-  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(value);
-};
-
-// Display text for a cell value using the column's "format"
-export const formatValue = (value, column = {}, t) => {
-  if (value === undefined || value === null || value === '') return '';
-  const { format, locale, currency = 'USD', decimals } = column;
-  const digits = decimals !== undefined ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals } : {};
-  const number = Number(value);
-  switch (format) {
-    case 'number': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, digits).format(number);
-    case 'currency': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, { style: 'currency', currency, ...digits }).format(number);
-    case 'percent': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, { style: 'percent', ...digits }).format(number);
-    case 'date': {
-      const date = toDate(value);
-      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString(locale);
-    }
-    case 'boolean': return value ? (t ? t('table.yes') : 'Yes') : (t ? t('table.no') : 'No');
-    default: return String(value);
-  }
-};
 
 /*
  * Looks: { variant, background, color, className, style }
@@ -136,22 +115,6 @@ const lookProps = (merged, baseClass) => ({
  * Rule condition against a row: { field, equals, notEquals, in, notIn, gt, gte, lt, lte, contains, empty }.
  * All given tests must pass; field defaults to the column's key for cellRules.
  */
-export const matchesRule = (when = {}, row = {}, defaultField) => {
-  const value = row[when.field ?? defaultField];
-  const number = Number(value);
-  const isEmpty = value === undefined || value === null || value === '';
-  if ('equals' in when && String(value) !== String(when.equals)) return false;
-  if ('notEquals' in when && String(value) === String(when.notEquals)) return false;
-  if (when.in && !when.in.map(String).includes(String(value))) return false;
-  if (when.notIn && when.notIn.map(String).includes(String(value))) return false;
-  if ('gt' in when && (isEmpty || !(number > when.gt))) return false;
-  if ('gte' in when && (isEmpty || !(number >= when.gte))) return false;
-  if ('lt' in when && (isEmpty || !(number < when.lt))) return false;
-  if ('lte' in when && (isEmpty || !(number <= when.lte))) return false;
-  if ('contains' in when && !String(value ?? '').toLowerCase().includes(String(when.contains).toLowerCase())) return false;
-  if ('empty' in when && isEmpty !== Boolean(when.empty)) return false;
-  return true;
-};
 
 const ruleLooks = (rules = [], row, defaultField) => rules
   .filter((rule) => matchesRule(rule.when, row, defaultField))
@@ -753,3 +716,10 @@ export const DataTable = ({
     </div>
   );
 };
+
+// Moved to tableUtils.js (so the chart and tree don't load the table); still exported here
+export { formatValue, matchesRule };
+
+// Schemas use it by name (registered when this module loads: 'rcube-html', or 'rcube-html/table' with 'rcube-html/core')
+registerComponent('DataTable', DataTable);
+registerComponent('DynamicTable', DataTable);

@@ -1,3 +1,4 @@
+import { registerComponent } from "./html";
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { Button, ButtonGroup, Form } from "./ui";
 import { useTranslator } from "./i18n";
@@ -302,3 +303,7 @@ export const RichTextField = forwardRef(function RichTextField({
     </Form.Group>
   );
 });
+
+// Schemas use it by name (registered when this module loads: 'rcube-html', or 'rcube-html/richtext' with 'rcube-html/core')
+registerComponent('RichText', RichText);
+registerComponent('RichTextField', RichTextField, { field: true, actions: true });

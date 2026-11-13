@@ -109,3 +109,48 @@ export const aggregate = (kind, rows, key) => {
 
 // "{firstName} {lastName}" -> values from the row
 export const interpolate = (template, row) => String(template).replace(/\{(\w+)\}/g, (_, key) => (row[key] ?? ''));
+
+// Value of a date cell (Date, timestamp or ISO / "YYYY-MM-DD" text)
+export const toDate = (value) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+  return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date(value);
+};
+
+// Display text for a cell value using the column's "format"
+
+// A cell's text from its column's format (number, currency, percent, date, boolean)
+export const formatValue = (value, column = {}, t) => {
+  if (value === undefined || value === null || value === '') return '';
+  const { format, locale, currency = 'USD', decimals } = column;
+  const digits = decimals !== undefined ? { minimumFractionDigits: decimals, maximumFractionDigits: decimals } : {};
+  const number = Number(value);
+  switch (format) {
+    case 'number': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, digits).format(number);
+    case 'currency': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, { style: 'currency', currency, ...digits }).format(number);
+    case 'percent': return Number.isNaN(number) ? String(value) : new Intl.NumberFormat(locale, { style: 'percent', ...digits }).format(number);
+    case 'date': {
+      const date = toDate(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString(locale);
+    }
+    case 'boolean': return value ? (t ? t('table.yes') : 'Yes') : (t ? t('table.no') : 'No');
+    default: return String(value);
+  }
+};
+
+// Does a row match a rule ({ field, equals, notEquals, in, notIn, gt, gte, lt, lte, contains, empty })?
+export const matchesRule = (when = {}, row = {}, defaultField) => {
+  const value = row[when.field ?? defaultField];
+  const number = Number(value);
+  const isEmpty = value === undefined || value === null || value === '';
+  if ('equals' in when && String(value) !== String(when.equals)) return false;
+  if ('notEquals' in when && String(value) === String(when.notEquals)) return false;
+  if (when.in && !when.in.map(String).includes(String(value))) return false;
+  if (when.notIn && when.notIn.map(String).includes(String(value))) return false;
+  if ('gt' in when && (isEmpty || !(number > when.gt))) return false;
+  if ('gte' in when && (isEmpty || !(number >= when.gte))) return false;
+  if ('lt' in when && (isEmpty || !(number < when.lt))) return false;
+  if ('lte' in when && (isEmpty || !(number <= when.lte))) return false;
+  if ('contains' in when && !String(value ?? '').toLowerCase().includes(String(when.contains).toLowerCase())) return false;
+  if ('empty' in when && isEmpty !== Boolean(when.empty)) return false;
+  return true;
+};

@@ -1,10 +1,11 @@
+import { registerComponent } from "./html";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, ButtonGroup, Form, Spinner } from "./ui";
 import { useTranslator } from "./i18n";
 import { runAction } from "./form";
 import { toolbarButtons } from "./toolbar";
-import { matchesRule } from "./table";
-import { fileKindColor, formatBytes } from "./upload";
+import { matchesRule } from "./tableUtils";
+import { fileKindColor, formatBytes } from "./uploadUtils";
 import {
   TREE_VIEWS, descendantIds, findTreeNode, initiallyExpanded, isBranch, labelOf, mapTreeNode, moveTreeNode, needsLoad, walkTree,
 } from "./treeUtils";
@@ -1084,3 +1085,6 @@ export const Tree = ({
     </div>
   );
 };
+
+// Schemas use it by name (registered when this module loads: 'rcube-html', or 'rcube-html/tree' with 'rcube-html/core')
+registerComponent('Tree', Tree);

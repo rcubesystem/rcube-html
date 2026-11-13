@@ -1,6 +1,8 @@
 # rcube-html: An Open-Source, JSON-Driven HTML Page Renderer
 
-Schema-driven forms and layouts for **React**, with their own components and stylesheet — no Bootstrap needed. Describe rows, columns, fields and buttons as JSON-like objects; rcube-html renders them with validation, conditional fields, dependent selects, input masks, repeatable entries, runtime element changes and multi-language text.
+rcube-html is a schema-driven form and layout engine. Describe rows, columns, fields and buttons as JSON-like objects, and it renders them — with built-in validation, conditional and dependent fields, input masks, repeatable entries, runtime changes and multi-language text. Use it natively in **React**, or as the `<rcube-form>` web component in **Angular, Vue, plain JavaScript, and server-rendered pages (JSP, PHP, .NET)**. Ships with its own components and stylesheet — no framework lock-in.
+
+It works with any CSS framework — Bootstrap, Tailwind, a CMS theme, your own CSS or none — for building responsive pages.
 
 **Live demo and tutorials: [rcube-html.com](https://rcube-html.com/)** — every component with a live example, the events it fires, and copy-ready schema and page code ([source](https://github.com/rcubesystem/rcube-html-examples)).
 
@@ -8,7 +10,7 @@ Schema-driven forms and layouts for **React**, with their own components and sty
 npm install rcube-html
 ```
 
-Peer dependencies: `react` ≥ 18, `react-dom` ≥ 18. Import the stylesheet once in your app:
+Peer dependencies: `react` ≥ 18, `react-dom` ≥ 18 (for React apps; the `<rcube-form>` element brings its own React: see [Angular, Vue, plain JavaScript and server pages](#angular-vue-plain-javascript-and-server-pages)). Import the stylesheet once in your app:
 
 ```js
 import 'rcube-html/styles.css';
@@ -18,9 +20,40 @@ Without it, rcube-html adds the same CSS to the page itself the first time it lo
 
 Works in Next.js App Router (the bundle is marked `"use client"`).
 
+## What's in the package
+
+One npm package, `rcube-html`, holds everything:
+
+| What | Where in rcube-html | How it's used |
+|---|---|---|
+| React library | `src/*.js` → `dist/index.js`, `dist/core.js`, … | `import … from "rcube-html"` |
+| `<rcube-form>` element | `src/element.js`, `src/element/*.js` → `dist/element/` | `import "rcube-html/element"` |
+| Vue wrapper | `src/element/vue.js` → `dist/element/vue.js` | `import { RcubeForm } from "rcube-html/vue"` |
+| Script-tag bundles | `src/browser.js`, `src/browser-core.js` → `dist/browser/` | `<script src="…/rcube-html.js">` |
+| Node server helper | `src/server.js` → `dist/server.js` | `import { renderFormHtml } from "rcube-html/server"` |
+| Angular component | `integrations/angular/rcube-form.component.ts` | copied into the Angular app |
+| JSP tag | `integrations/jsp/rcube-form.tag` | copied to `WEB-INF/tags/rcube/` |
+| TypeScript types | `types/*.d.ts` | used by editors and TypeScript on their own |
+| Tests | `scripts/smoke.mjs`, `features.mjs`, `element.mjs` | `npm test` |
+
+## Get it
+
+| You build with | Get rcube-html from | Then |
+|---|---|---|
+| React / Next.js | npm: `npm install rcube-html` | `import { useDynamicTag, DynamicTag } from "rcube-html"` |
+| Angular | npm: `npm install rcube-html` | copy `integrations/angular/rcube-form.component.ts` into the app |
+| Vue 3 | npm: `npm install rcube-html` | `import { RcubeForm } from "rcube-html/vue"` |
+| Any bundler (Svelte, Lit, jQuery, …) | npm: `npm install rcube-html` | `import { mount } from "rcube-html/element"` |
+| Plain HTML, PHP, .NET, Django, a CMS | the CDN — `https://cdn.jsdelivr.net/npm/rcube-html@0.8.0/dist/browser/rcube-html.js` (or unpkg.com) — or the files of `dist/browser/` copied to your static folder | `<script src="…/rcube-html.js">` |
+| Java / JSP | the files of `dist/browser/` and `integrations/jsp/rcube-form.tag` copied into the web app — or, once it's deployed at [webjars.org](https://www.webjars.org/) (NPM tab), the Maven dependency `org.webjars.npm:rcube-html` | `<rc:rcube-form schemaFile="…">` |
+| Node server pages | npm: `npm install rcube-html` | `renderFormHtml(…)` from `rcube-html/server` |
+
+Starters with every example, one per framework (React, Angular, Vue, HTML, JSP), are in the
+[examples repository](https://github.com/rcubesystem/rcube-html-examples).
+
 ## Styles and themes
 
-rcube-html draws its own buttons, fields, tables, pager, dropdowns, dialogs, tabs and so on, with `rc-` classes (`rc-btn rc-btn-primary`, `rc-input`, `rc-table`, …), so it runs the same in any page: with Bootstrap, inside Liferay (Clay), or on its own.
+rcube-html draws its own buttons, fields, tables, pager, dropdowns, dialogs, tabs and so on, with `rc-` classes (`rc-btn rc-btn-primary`, `rc-input`, `rc-table`, …), so it runs the same in any page: with Bootstrap, inside a CMS, or on its own.
 
 **Colours, corners and sizes are CSS variables.** Set them on `:root` (or on any element, for one part of the page):
 
@@ -37,7 +70,7 @@ rcube-html draws its own buttons, fields, tables, pager, dropdowns, dialogs, tab
 The full list is at the top of `styles.css`: `--rc-{primary|secondary|success|info|warning|danger|light|dark}` (+ `-rgb`, `-text`, `-bg-subtle`, `-border-subtle`), `--rc-body-color`, `--rc-body-bg`, `--rc-emphasis-color`, `--rc-secondary-color`, `--rc-secondary-bg`, `--rc-tertiary-bg`, `--rc-border-color`, `--rc-border-width`, `--rc-border-radius` (`-sm`, `-lg`), `--rc-link-color`, `--rc-focus-ring`, `--rc-box-shadow`, `--rc-font-size`, and the layers `--rc-z-dropdown`, `--rc-z-modal`, `--rc-z-tooltip`.
 
 - **With Bootstrap 5.3 on the page**, every variable follows Bootstrap's (`--rc-primary` is `var(--bs-primary)`), so an app's Bootstrap theme colours rcube-html too. Component tweaks a theme makes to Bootstrap's own classes (`.btn { padding }`, `.table > * > * { padding }`) need the same lines for `.rc-btn`, `.rc-table`, … — each component has variables for that (`--rc-btn-padding-x`, `--rc-btn-radius`, `--rc-table-hover-bg`, …).
-- **In Liferay**, map the variables to the theme's (Clay's) once, in the theme or a client extension:
+- **In a CMS**, map the variables to the theme's once, in the theme or the site's own stylesheet:
 
   ```css
   :root {
@@ -48,7 +81,7 @@ The full list is at the top of `styles.css`: `--rc-{primary|secondary|success|in
   }
   ```
 
-  Clay's own `.btn`, `.form-control`, `.table`, `.row`… never touch rcube-html (it uses none of them), and rcube-html's classes never touch Clay's.
+  The theme's own `.btn`, `.form-control`, `.table`, `.row`… never touch rcube-html (it uses none of them), and rcube-html's classes never touch the theme's.
 - **Dark:** `data-rc-theme="dark"` (or Bootstrap's `data-bs-theme="dark"`) on `<html>` or any element.
 
 **Classes for schemas.** Every node takes `props.className` and `props.style`. rcube-html's utility classes carry Bootstrap's names with `rc-` in front: `rc-d-flex`, `rc-d-md-none`, `rc-gap-2`, `rc-mt-3`, `rc-p-2`, `rc-text-center`, `rc-text-muted`, `rc-small`, `rc-fw-semibold`, `rc-border`, `rc-rounded`, `rc-bg-body-tertiary`, `rc-w-100`, `rc-col-md-6`, … On a page with Bootstrap its classes work in schemas too — but only there.
@@ -101,11 +134,184 @@ export default function SignUp() {
 }
 ```
 
+## Entry points: load only what you use
+
+`rcube-html` is everything. A page that needs only some of it imports `rcube-html/core` and the parts it uses:
+
+| Import | Adds | About (gzipped) |
+|---|---|---|
+| `rcube-html` | everything | 118 KB |
+| `rcube-html/core` | forms, fields, layout, containers, display, actions, languages, styles | 51 KB |
+| `rcube-html/table` | `DataTable` / `DynamicTable` | +9 KB on core |
+| `rcube-html/chart` | `Chart` | +12 KB on core |
+| `rcube-html/calendar` | `Calendar` | +16 KB on core |
+| `rcube-html/tree` | `Tree` (file explorer) | |
+| `rcube-html/richtext` | `RichText`, `RichTextField` | |
+| `rcube-html/upload` | `FileUploadField` / `FileUpload` | |
+
+```js
+import { useDynamicTag, DynamicTag } from 'rcube-html/core';
+import 'rcube-html/table';              // DataTable can now be used in schemas (it is also exported: import { DataTable } …)
+```
+
+Each entry point adds its components to schemas when it is imported, and they all share one copy of the core (one
+component registry, one language context). A schema that uses a component whose entry point the page didn't import
+shows *"Chart isn't loaded: add import "rcube-html/chart" to this page"* where it would be. Pages that import
+`rcube-html` need no change.
+
+## Angular, Vue, plain JavaScript and server pages
+
+The same schemas work outside React through **`<rcube-form>`**, a web component with React inside it (the page
+doesn't install React). One schema JSON file can serve a React app, an Angular app, a Vue app and a JSP page.
+
+| Where | Use | File |
+|---|---|---|
+| Angular 14+ | `<rcube-html-form>` component: inputs, outputs, `formControl` / `ngModel` / `[(values)]` | `integrations/angular/rcube-form.component.ts` (copy into the app) |
+| Vue 3 | `<RcubeForm>` with `v-model` | `import { RcubeForm } from "rcube-html/vue"` |
+| Any bundler (Svelte, Lit, jQuery, …) | `<rcube-form>` or `mount("#id", { … })` | `import "rcube-html/element"` |
+| No bundler: JSP, PHP, ASP.NET, Django, CMS pages | one `<script>`, the schema as JSON in the page | `dist/browser/rcube-html.js` (`rcube-html.core.js`: forms only) |
+| JSP | `<rc:rcube-form schemaFile="/WEB-INF/schemas/signup.json">` | `integrations/jsp/rcube-form.tag` |
+| Node servers | `renderFormHtml(options)`: the element with the form already drawn | `import { renderFormHtml } from "rcube-html/server"` |
+
+Sizes (gzipped, React and styles included): `rcube-html/element` (everything) about 162 KB, `rcube-html/element/core`
+(forms) about 111 KB. As with the React entry points, `rcube-html/element/core` plus `rcube-html/element/table`,
+`/chart`, `/calendar`, `/tree`, `/richtext`, `/upload` load only what a page uses.
+
+### The element
+
+```html
+<rcube-form id="signup" actions="signupActions" schema-src="/schemas/signup.json"></rcube-form>
+
+<!-- or the options as JSON in the page (what a server page writes) -->
+<rcube-form id="signup" actions="signupActions">
+  <script type="application/json" data-rcube="schema">[ … ]</script>
+  <script type="application/json" data-rcube="values">{ "email": "a@b.co" }</script>
+  <p>Loading…</p>   <!-- anything here stays until the form replaces it -->
+</rcube-form>
+```
+
+- **Options** — properties: `schema`, `buttons`, `actions`, `messages`, `languages`, `language`, `data`, `repeatable`,
+  `values`. Each new value draws the form again (give a new array/object rather than changing one in place). In the
+  page: `<script type="application/json" data-rcube="schema | buttons | values | messages | languages | data">`, or
+  `data-rcube="config"` with `{ "schema": …, "buttons": …, … }`. Attributes: `schema-src` (a schema or a config to
+  fetch), `actions`, `language`, `repeatable`.
+- **Actions** the schema names (`"onClick": "save()"`) are found in this order: built-in actions, `el.actions`
+  (an object, or `(api) => object`), the global object named by the `actions` attribute (each called as
+  `(event, context, api)`), and otherwise an `rcube-action` event.
+- **Events** (`event.detail`): `rcube-ready` `{ api }`, `rcube-change` `{ values, entries }`, `rcube-submit`
+  `{ entries, values }` (after `runValidation()` passes), `rcube-action` `{ name, event, context, api }`,
+  `rcube-error` `{ error }` (`schema-src` failed).
+- **`el.api`**: every form action — `setFormData`, `getFormEntries`, `runValidation`, `setNodeProps`, `hideNode`, ….
+
+```js
+import { mount } from "rcube-html/element";        // or window.RcubeHtml.mount with the <script>
+const form = mount("#signup", {
+  schema,
+  actions: { checkEmail: (event, context) => { /* … */ } },
+  onSubmit: ({ values }) => fetch("/api/signup", { method: "POST", body: JSON.stringify(values) }),
+  onAction: ({ name, api }) => console.log("not defined:", name),
+});
+form.api.setFormData({ email: "a@b.co" });
+```
+
+### Angular
+
+Copy `node_modules/rcube-html/integrations/angular/rcube-form.component.ts` into the app (Angular compiles components
+from the app's own source), then:
+
+```ts
+@Component({
+  standalone: true,
+  imports: [RcubeFormComponent, ReactiveFormsModule],
+  template: `<rcube-html-form [schema]="schema" [actions]="actions" [formControl]="signup"
+               (submitted)="save($event.values)" (action)="onAction($event)"></rcube-html-form>`,
+})
+export class SignupComponent {
+  schema = signupSchema;                          // the same JSON the other apps use
+  signup = new FormControl({ email: "" });
+  actions = { checkEmail: () => { /* … */ } };
+  @ViewChild(RcubeFormComponent) form!: RcubeFormComponent;   // this.form.api.setNodeProps(…)
+}
+```
+
+Outputs: `submitted`, `valuesChange` (so `[(values)]` works), `formChange`, `action`, `ready`. Add
+`import "rcube-html/element/table";` (etc.) to `main.ts` when a schema uses those components.
+
+### Vue 3
+
+```vue
+<script setup>
+import { ref } from "vue";
+import { RcubeForm } from "rcube-html/vue";
+import "rcube-html/element/table";               // only if the schema has a DataTable
+const values = ref({ email: "" });
+const form = ref();                              // form.value.api.setNodeProps(…)
+</script>
+<template>
+  <RcubeForm ref="form" :schema="schema" :actions="actions" v-model="values" @submit="save" @action="onAction" />
+</template>
+```
+
+Events: `update:modelValue`, `change`, `submit`, `action`, `ready`, `error`.
+
+### Server pages (JSP, PHP, .NET, …)
+
+Write the element with its options as JSON, and load the script once:
+
+```jsp
+<%@ taglib prefix="rc" tagdir="/WEB-INF/tags/rcube" %>
+<rc:rcube-form id="signup" schemaFile="/WEB-INF/schemas/signup.json" values="${signupJson}" actions="signupActions">
+  <p>Loading the form…</p>
+</rc:rcube-form>
+<script src="${pageContext.request.contextPath}/static/rcube-html/rcube-html.js"></script>
+<script>
+  window.signupActions = {
+    save: function (event, context, api) {
+      var entries = api.runValidation();
+      if (entries) fetch("signup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entries[0]) });
+    }
+  };
+</script>
+```
+
+The tag (`integrations/jsp/rcube-form.tag`, Java 9+) goes in `WEB-INF/tags/rcube/`; its header lists the
+attributes. Other servers write the same markup: `<rcube-form>` and `<script type="application/json"
+data-rcube="schema">` with `</` written as `<\/` inside the JSON.
+
+Node servers can draw the form too, so it shows before the script runs:
+
+```js
+import { renderFormHtml } from "rcube-html/server";
+const html = renderFormHtml({ schema, values }, { attributes: { id: "signup", actions: "signupActions" } });
+```
+
+The browser form replaces the drawn one when the script starts (text typed before that is not kept).
+
 ## Schema nodes
 
 Live demo: [rcube-html.com/schema-basics](https://rcube-html.com/schema-basics)
 
 Every node has a unique `id`. Layout nodes have `children`; component nodes have `props`.
+
+**Shorthands.** Two things are optional, and the form makes the schema regular when it gets it (`normalizeSchema`):
+
+- **A single child can be an object** instead of a one-item list, in `children`, `items[].children` and `footer`. Empty
+  entries (`null`, `false`) are left out, so `cond && node` works inside a list.
+- **The `id` is optional.** A field (any node with `props.name`) gets its name (`"email"`, then `"email-2"` if taken);
+  any other node gets its parent's id, its type and its place among its siblings: `row1`, `row1-column2`,
+  `row1-column2-p1`, `tabs-a-p1` (a tab's key), `m-footer-buttonfield1`. Ids you write are kept and never given to
+  another node. Write the id yourself on a node your code changes (`setNodeProps`, `hideNode`, …) when the schema
+  around it may change: a generated id follows the node's place.
+
+```js
+// the same form as the long version: no ids, single children as objects
+const schema = [
+  { type: 'row', children: { type: 'column', children: { type: 'InputField', props: { name: 'email', label: 'Email', required: true } } } },
+];
+```
+
+Code that walks a schema itself can read children the same way with `childrenOf(node)` (always a list), or make a
+whole schema regular first with `normalizeSchema(schema)`. Arrays and explicit ids keep working exactly as before.
 
 | `type` | Renders | Notes |
 |---|---|---|
@@ -413,6 +619,7 @@ A calendar with day, week, month, year and schedule (agenda) views: a sidebar wi
     { id: 'offsite', title: 'Offsite', start: '2026-11-05', end: '2026-11-06', allDay: true },   // end = last day
   ],
   sidebar: true, searchable: true, editable: true, selectable: true, eventEditor: true, autoUpdate: true,
+  repeatable: true,             // the event editor's Repeat section (false hides it)
   sidebarToggle: true,          // the hamburger before Today shows / hides the left panel
   // sidebarOpen: true | false    // fixed open / closed; unset: open on large screens, closed on small ones
   keyboardShortcuts: true,
@@ -426,6 +633,7 @@ A calendar with day, week, month, year and schedule (agenda) views: a sidebar wi
 - **Events**: `id`, `title`, `start` / `end` (`"YYYY-MM-DDTHH:mm"` local, or `"YYYY-MM-DD"` for all-day; an all-day `end` is the last day, inclusive), `allDay`, `calendar`, `color`, `location`, `description`, `editable: false`, `recurrence: { freq: daily | weekly | monthly | yearly, interval, byDay: [0-6], count, until, exceptions: ['YYYY-MM-DD'] }`.
 - Timed events of 24 hours or more show in the all-day row; overlapping events sit side by side.
 - **Editing**: click or drag on empty time to create, drag an event to move it (to another day too), drag its bottom edge to resize, and click it for details (edit / delete). A repeating event is edited as a series; deleting asks *this event* or *all events*.
+- **Repeating events from the editor**: its **Repeat** section makes an event repeat daily, weekly (on the days picked), monthly or yearly, every *N* days / weeks / months / years, ending never, on a date or after a number of times — saved as the event's `recurrence`. Editing a series changes its first occurrence and its schedule; occurrences deleted on their own (`exceptions`) stay deleted. `repeatable: false` hides the section.
 - With `autoUpdate: true` (default) the calendar applies the change itself and then calls your action (save it to the API there). With `false` it only calls the action and you update with the actions below.
 - **Keyboard**: `T` today, `D` / `W` / `M` / `Y` / `A` views, `J` / `K` next / previous, `C` create, `Esc` closes popovers; events are focusable (Enter opens them).
 

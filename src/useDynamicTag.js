@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cloneSchema, createFormActions } from "./form";
 import { createTranslator } from "./i18n";
+import { normalizeSchema, schemaIds } from "./schema";
 
 // Rows over each repeated entry: "Entry N" heading, plus a Remove button on added copies
 const buildCopyHeading = (copyId, index, t) => ({
@@ -30,7 +31,8 @@ const buildCopyHeading = (copyId, index, t) => ({
  *   });
  *
  * Options
- *   schema      Array of schema nodes for the form.
+ *   schema      Array of schema nodes for the form. A single child may be written as an object, and ids are
+ *               optional (a field's is its name, others follow their place): see schema.js / normalizeSchema.
  *   buttons     Array of schema nodes rendered once after all copies (not repeated).
  *   messages    Starting message set (usually the page's English text including rcube-html/lang/lang_en).
  *               Also the fallback for keys missing from other languages.
@@ -87,16 +89,23 @@ export const useDynamicTag = ({
 
   const t = useMemo(() => createTranslator(lang.messages, messages), [lang.messages, messages]);
 
+  // The schema and buttons made regular once: lists for single children written as objects, an id on every node
+  // (buttons' generated ids start with "buttons-" and never take one of the schema's)
+  const regular = useMemo(() => {
+    const nodes = normalizeSchema(schema);
+    return { schema: nodes, buttons: normalizeSchema(buttons, { taken: schemaIds(nodes), prefix: 'buttons-' }) };
+  }, [schema, buttons]);
+
   // Copy 1 keeps the original names; copy N gets "__N" on every id / field name (firstName__2)
   const formSchema = useMemo(() => {
-    if (!repeatable || copyIds.length === 1) return schema;
+    if (!repeatable || copyIds.length === 1) return regular.schema;
     return copyIds.flatMap((copyId, index) => [
       buildCopyHeading(copyId, index, t),
-      ...(copyId === 1 ? schema : cloneSchema(schema, `__${copyId}`)),
+      ...(copyId === 1 ? regular.schema : cloneSchema(regular.schema, `__${copyId}`)),
     ]);
-  }, [schema, repeatable, copyIds, t]);
+  }, [regular, repeatable, copyIds, t]);
 
-  const fullSchema = useMemo(() => [...formSchema, ...buttons], [formSchema, buttons]);
+  const fullSchema = useMemo(() => [...formSchema, ...regular.buttons], [formSchema, regular]);
 
   const actions = createFormActions({
     fieldRefs, pendingValues, setFormErrors: setErrors, setFormValues: setValues, setNodeState,
